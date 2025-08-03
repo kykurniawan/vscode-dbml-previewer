@@ -30,7 +30,8 @@ const TableNode = ({ data }) => {
       borderRadius: '8px',
       minWidth: '200px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      boxSizing: 'border-box'
     }}>
       {/* Table Header */}
       <div style={{
@@ -39,13 +40,14 @@ const TableNode = ({ data }) => {
         padding: '8px 12px',
         fontWeight: 'bold',
         fontSize: '14px',
+        boxSizing: 'border-box',
         borderBottom: '1px solid var(--vscode-panel-border)'
       }}>
         📋 {table.name}
       </div>
 
       {/* Columns */}
-      <div style={{ padding: '4px 0', position: 'relative' }}>
+      <div style={{ padding: '4px 0', position: 'relative', boxSizing: 'border-box' }}>
         {table.fields?.map((column, index) => {
           const handleInfo = getColumnHandleInfo(column.name);
           return (

@@ -148,6 +148,9 @@ function getWebviewContent(content, fileName, filePath, webview) {
 				width: 100vw;
 				height: 100vh;
 			}
+			* {
+				box-sizing: border-box;
+			}
 		</style>
 	</head>
 	<body>

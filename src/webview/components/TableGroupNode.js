@@ -14,11 +14,11 @@ const TableGroupNode = ({ data, selected }) => {
     width: '100%',
     height: '100%',
     backgroundColor: selected
-      ? 'rgba(0, 122, 204, 0.2)'
+      ? 'color-mix(in srgb, var(--vscode-button-background) 20%, transparent)'
       : isHovered
-        ? 'rgba(0, 122, 204, 0.15)'
-        : 'rgba(0, 122, 204, 0.1)',
-    border: 'none',
+        ? 'color-mix(in srgb, var(--vscode-button-background) 15%, transparent)'
+        : 'color-mix(in srgb, var(--vscode-button-background) 10%, transparent)',
+    border: '2px solid var(--vscode-button-background)',
     borderRadius: '8px',
     zIndex: -1,
     transition: 'all 0.2s ease-in-out',
@@ -30,11 +30,12 @@ const TableGroupNode = ({ data, selected }) => {
     position: 'absolute',
     top: '0',
     left: '0',
-    transform: 'translate(0, -110%)',
-    backgroundColor: 'rgba(0, 122, 204, 0.8)',
-    color: 'white',
-    padding: '4px 8px',
-    fontSize: '11px',
+    transform: 'translate(0, -120%)',
+    backgroundColor: 'var(--vscode-button-background)',
+    color: 'var(--vscode-button-foreground)',
+    padding: '16px 12px',
+    border: '2px solid var(--vscode-button-background)',
+    fontSize: '14px',
     fontWeight: 'bold',
     borderRadius: '8px',
     border: 'none',
@@ -43,13 +44,12 @@ const TableGroupNode = ({ data, selected }) => {
 
   const noteStyle = {
     boxSizing: 'border-box',
-    color: 'white',
+    color: 'var(--vscode-button-foreground)',
     marginTop: '10px',
-    fontSize: '7px',
+    fontSize: '9px',
     fontStyle: 'italic',
     fontWeight: 'normal',
     border: 'none',
-    maxWidth: '200px',
     overflow: 'hidden',
   };
 

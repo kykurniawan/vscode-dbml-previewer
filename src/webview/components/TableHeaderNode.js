@@ -17,23 +17,25 @@ const TableHeaderNode = ({ data }) => {
   return (
     <div style={{
       background: 'var(--vscode-editor-background)',
-      border: '2px solid var(--vscode-panel-border)',
       borderRadius: '8px',
       minWidth: `${tableWidth}px`,
       width: `${tableWidth}px`,
       height: `${totalHeight}px`,
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       overflow: 'visible',
       position: 'relative'
     }}>
       {/* Table Header */}
       <div style={{
+        borderTop: '2px solid var(--vscode-panel-border)',
+        borderLeft: '2px solid var(--vscode-panel-border)',
+        borderRight: '2px solid var(--vscode-panel-border)',
         background: 'var(--vscode-button-background)',
         color: 'var(--vscode-button-foreground)',
         padding: '8px 12px',
         fontWeight: 'bold',
         fontSize: '14px',
         height: `${headerHeight}px`,
+        borderRadius: '8px 8px 0 0',
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center'
@@ -50,6 +52,8 @@ const TableHeaderNode = ({ data }) => {
           fontStyle: 'italic',
           background: 'var(--vscode-editor-inactiveSelectionBackground)',
           borderTop: '1px solid var(--vscode-panel-border)',
+          borderLeft: '2px solid var(--vscode-panel-border)',
+          borderRight: '2px solid var(--vscode-panel-border)',
           height: `${noteHeight}px`,
           boxSizing: 'border-box',
           display: 'flex',
@@ -64,6 +68,10 @@ const TableHeaderNode = ({ data }) => {
         <div style={{
           padding: `${tablePadding}px`,
           borderTop: table.note ? 'none' : '1px solid var(--vscode-panel-border)',
+          borderLeft: '2px solid var(--vscode-panel-border)',
+          borderRight: '2px solid var(--vscode-panel-border)',
+          borderBottom: '2px solid var(--vscode-panel-border)',
+          borderRadius: '0 0 8px 8px',
           background: 'var(--vscode-editor-background)',
           height: `${columnCount * columnHeight + (tablePadding * 2)}px`,
           boxSizing: 'border-box'
