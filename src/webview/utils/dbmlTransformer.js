@@ -52,6 +52,33 @@ const calculateTableWidth = (table) => {
 
 
 
+const mapSourceAndTarget = (ref) => {
+  let source;
+  let target;
+
+  // Handle one-to-many relationships (< and >)
+  if (ref.endpoints[0].relation === '1' && ref.endpoints[1].relation === '*') {
+    source = ref.endpoints[1] // many side (has foreign key)
+    target = ref.endpoints[0] // one side (has primary key)
+  } else if (ref.endpoints[1].relation === '1' && ref.endpoints[0].relation === '*') {
+    source = ref.endpoints[0] // many side (has foreign key)
+    target = ref.endpoints[1] // one side (has primary key)
+  } else if (ref.endpoints[0].relation === '1') {
+    source = ref.endpoints[1]
+    target = ref.endpoints[0]
+  } else if (ref.endpoints[1].relation === '1') {
+    source = ref.endpoints[0]
+    target = ref.endpoints[1]
+  } else {
+    // Handle one-to-one relationships (-) and other cases
+    // For one-to-one, use the order as specified in DBML
+    source = ref.endpoints[1]
+    target = ref.endpoints[0]
+  }
+
+  return [source, target]
+}
+
 /**
  * Analyze column relationships from DBML refs
  * @param {Array} refs - Array of reference objects with proper fieldNames
@@ -64,34 +91,48 @@ const analyzeColumnRelationships = (refs) => {
   console.log('dbg: refs count:', refs.length);
 
   refs.forEach(ref => {
-    ref.endpoints?.forEach(endpoint => {
-      const tableName = endpoint.tableName;
-      const fieldNames = endpoint.fieldNames || [endpoint.fieldName]; // Support both formats
+    // Use mapSourceAndTarget to properly determine source and target
+    const [sourceEndpoint, targetEndpoint] = mapSourceAndTarget(ref);
+    
+    // Handle source endpoint
+    if (sourceEndpoint?.tableName) {
+      const tableName = sourceEndpoint.tableName;
+      const fieldNames = sourceEndpoint.fieldNames || [sourceEndpoint.fieldName];
       
-      if (tableName && fieldNames && fieldNames.length > 0) {
-        // Initialize table object if it doesn't exist
-        if (!columnHandles[tableName]) {
-          columnHandles[tableName] = {};
-        }
-        
-        // Mark each field in this endpoint
-        fieldNames.forEach(fieldName => {
-          if (fieldName) {
-            // Determine if this is source or target based on relation
-            // "*" relation means this side can have multiple records (many side)
-            // "1" relation means this side has one record (one side)
-            const isMany = endpoint.relation === '*';
-            const isOne = endpoint.relation === '1';
-            
-            columnHandles[tableName][fieldName] = {
-              isSource: isMany, // Many side typically has the foreign key (source)
-              isTarget: isOne,  // One side typically has the primary key (target)
-              relation: endpoint.relation
-            };
-          }
-        });
+      if (!columnHandles[tableName]) {
+        columnHandles[tableName] = {};
       }
-    });
+      
+      fieldNames.forEach(fieldName => {
+        if (fieldName) {
+          columnHandles[tableName][fieldName] = {
+            isSource: true,
+            isTarget: false,
+            relation: sourceEndpoint.relation
+          };
+        }
+      });
+    }
+    
+    // Handle target endpoint
+    if (targetEndpoint?.tableName) {
+      const tableName = targetEndpoint.tableName;
+      const fieldNames = targetEndpoint.fieldNames || [targetEndpoint.fieldName];
+      
+      if (!columnHandles[tableName]) {
+        columnHandles[tableName] = {};
+      }
+      
+      fieldNames.forEach(fieldName => {
+        if (fieldName) {
+          columnHandles[tableName][fieldName] = {
+            isSource: false,
+            isTarget: true,
+            relation: targetEndpoint.relation
+          };
+        }
+      });
+    }
   });
   
   return columnHandles;
@@ -303,21 +344,3 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
     edges,
   };
 };
-
-const mapSourceAndTarget = (ref) => {
-  let source;
-  let target;
-
-  if (ref.endpoints[0].relation === '1') {
-    source = ref.endpoints[1]
-    target = ref.endpoints[0]
-  } else if (ref.endpoints[1].relation === '1') {
-    source = ref.endpoints[0]
-    target = ref.endpoints[1]
-  } else {
-    source = ref.endpoints[0]
-    target = ref.endpoints[1]
-  }
-
-  return [source, target]
-}
