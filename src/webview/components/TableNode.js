@@ -122,7 +122,7 @@ const TableNode = ({ data }) => {
       {table.note && (
         <div style={{
           padding: '8px 12px',
-          fontSize: '11px',
+          fontSize: '9px',
           color: 'var(--vscode-descriptionForeground)',
           borderTop: '1px solid var(--vscode-panel-border)',
           fontStyle: 'italic',

@@ -1,5 +1,3 @@
-// Removed parseDbmlContent - parsing now happens in React webview
-
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
@@ -88,17 +86,8 @@ function createPreviewPanel(context, filePath, content) {
 	panel.webview.onDidReceiveMessage(
 		message => {
 			switch (message.command) {
-				case 'refresh':
-					// Re-read the file and update content
-					try {
-						const updatedContent = fs.readFileSync(filePath, 'utf8');
-						panel.webview.postMessage({
-							type: 'updateContent',
-							content: updatedContent
-						});
-					} catch (error) {
-						vscode.window.showErrorMessage(`Error refreshing: ${error.message}`);
-					}
+				case 'export':
+					vscode.window.showWarningMessage('Exporting DBML is not yet supported');
 					break;
 			}
 		},
@@ -170,7 +159,12 @@ function getWebviewContent(content, fileName, webview) {
 	</html>`;
 }
 
-function deactivate() { }
+function deactivate() {
+	// Clean up webview panel
+	if (panel) {
+		panel.dispose();
+	}
+}
 
 module.exports = {
 	activate,

@@ -36,6 +36,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [selectedEdgeIds, setSelectedEdgeIds] = useState(new Set());
   const [tooltipData, setTooltipData] = useState(null);
   const [tableGroups, setTableGroups] = useState([]);
+  const [draggedGroupPositions, setDraggedGroupPositions] = useState(new Map());
 
   console.log('🔄 State initialized - nodes:', nodes.length, 'edges:', edges.length);
 
@@ -90,7 +91,7 @@ const DBMLPreview = ({ initialContent }) => {
 
     currentTableGroups.forEach((group) => {
       // Find all table nodes belonging to this group
-      const groupTables = currentNodes.filter(node => 
+      const groupTables = currentNodes.filter(node =>
         node.type === 'tableHeader' && node.data?.tableGroup?.name === group.name
       );
 
@@ -101,7 +102,7 @@ const DBMLPreview = ({ initialContent }) => {
         groupTables.forEach(tableNode => {
           const { x, y } = tableNode.position;
           const tableWidth = tableNode.data.tableWidth || 200;
-          const tableHeight = 
+          const tableHeight =
             42 + // header height
             (tableNode.data.table?.note ? 30 : 0) + // note height
             (tableNode.data.columnCount * 30) + // columns height
@@ -114,16 +115,16 @@ const DBMLPreview = ({ initialContent }) => {
         });
 
         // Find the TableGroup node and update its position and size
-        const groupNodeIndex = updatedNodes.findIndex(node => 
+        const groupNodeIndex = updatedNodes.findIndex(node =>
           node.id === `tablegroup-${group.fullName}`
         );
 
         if (groupNodeIndex !== -1) {
           updatedNodes[groupNodeIndex] = {
             ...updatedNodes[groupNodeIndex],
-            position: { 
-              x: minX - padding, 
-              y: minY - padding 
+            position: {
+              x: minX - padding,
+              y: minY - padding
             },
             style: {
               ...updatedNodes[groupNodeIndex].style,
@@ -138,20 +139,97 @@ const DBMLPreview = ({ initialContent }) => {
     return updatedNodes;
   }, []);
 
-  // Custom nodes change handler that includes TableGroup bounds recalculation
+  // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
-    // Apply the standard changes first
-    onNodesChange(changes);
-    
-    // Check if any table positions changed and recalculate group bounds
-    const hasPositionChanges = changes.some(change => 
-      change.type === 'position' && change.dragging === false
+    // Track group drag start positions
+    const groupDragStartChanges = changes.filter(change =>
+      change.type === 'position' &&
+      change.id.startsWith('tablegroup-') &&
+      change.dragging === true
     );
 
-    if (hasPositionChanges && tableGroups.length > 0) {
-      setNodes(currentNodes => recalculateTableGroupBounds(currentNodes, tableGroups));
+    groupDragStartChanges.forEach(change => {
+      setDraggedGroupPositions(prev => {
+        const newMap = new Map(prev);
+        if (!newMap.has(change.id)) {
+          // Store the initial position when drag starts
+          const currentNode = nodes.find(n => n.id === change.id);
+          if (currentNode) {
+            newMap.set(change.id, currentNode.position);
+          }
+        }
+        return newMap;
+      });
+    });
+
+    // Handle group drag completion
+    const groupDragEndChanges = changes.filter(change =>
+      change.type === 'position' &&
+      change.id.startsWith('tablegroup-') &&
+      change.dragging === false
+    );
+
+    if (groupDragEndChanges.length > 0) {
+      groupDragEndChanges.forEach(groupChange => {
+        const groupId = groupChange.id;
+        const startPosition = draggedGroupPositions.get(groupId);
+
+        if (startPosition) {
+          const endPosition = { x: groupChange.position.x, y: groupChange.position.y };
+          const offsetX = endPosition.x - startPosition.x;
+          const offsetY = endPosition.y - startPosition.y;
+
+          // Move member tables
+          setNodes(currentNodes => {
+            const updatedNodes = [...currentNodes];
+            const groupNode = updatedNodes.find(node => node.id === groupId);
+            const groupName = groupNode?.data?.tableGroup?.name;
+
+            if (groupName && (offsetX !== 0 || offsetY !== 0)) {
+              updatedNodes.forEach((node, index) => {
+                if (node.type === 'tableHeader' && node.data?.tableGroup?.name === groupName) {
+                  updatedNodes[index] = {
+                    ...node,
+                    position: {
+                      x: node.position.x + offsetX,
+                      y: node.position.y + offsetY
+                    }
+                  };
+                }
+              });
+            }
+
+            return updatedNodes;
+          });
+
+          // Clear the tracked position
+          setDraggedGroupPositions(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(groupId);
+            return newMap;
+          });
+        }
+      });
     }
-  }, [onNodesChange, tableGroups, recalculateTableGroupBounds, setNodes]);
+
+    // Apply the standard changes
+    onNodesChange(changes);
+
+    // Check if any individual table positions changed (not group drag)
+    const hasTablePositionChanges = changes.some(change =>
+      change.type === 'position' &&
+      change.dragging === false &&
+      !change.id.startsWith('tablegroup-') &&
+      change.id.startsWith('table-')
+    );
+
+    if (hasTablePositionChanges && tableGroups.length > 0) {
+      // Only recalculate bounds for individual table movements
+      setTimeout(() => {
+        setNodes(currentNodes => recalculateTableGroupBounds(currentNodes, tableGroups));
+      }, 0);
+    }
+  }, [onNodesChange, tableGroups, recalculateTableGroupBounds, setNodes, nodes, draggedGroupPositions]);
 
   // Parse DBML content
   const parseDBML = useCallback(async (content) => {
@@ -333,9 +411,9 @@ const DBMLPreview = ({ initialContent }) => {
   }
 
   // Calculate total tables and refs across all schemas
-  const totalTables = dbmlData?.schemas?.reduce((total, schema) => 
+  const totalTables = dbmlData?.schemas?.reduce((total, schema) =>
     total + (schema.tables?.length || 0), 0) || 0;
-  const totalRefs = dbmlData?.schemas?.reduce((total, schema) => 
+  const totalRefs = dbmlData?.schemas?.reduce((total, schema) =>
     total + (schema.refs?.length || 0), 0) || 0;
 
   // Show empty state
@@ -393,9 +471,9 @@ const DBMLPreview = ({ initialContent }) => {
             border: '1px solid var(--vscode-panel-border)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '4px'
+            gap: '5px'
           }}>
-            <strong>✅ DBML Preview</strong>
+            <strong>DBML Preview</strong>
             <div style={{ fontSize: '12px' }}>
               {totalTables} tables
             </div>
@@ -405,26 +483,6 @@ const DBMLPreview = ({ initialContent }) => {
             <div style={{ fontSize: '10px', color: 'var(--vscode-descriptionForeground)' }}>
               {dbmlData.schemas?.length || 0} schema{(dbmlData.schemas?.length || 0) !== 1 ? 's' : ''}
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--vscode-descriptionForeground)' }}>
-              Click edges for details
-            </div>
-            <button
-              onClick={() => {
-                const vscode = window.vscode;
-                vscode.postMessage({ type: 'export', format: 'png' });
-              }}
-              style={{
-                background: 'var(--vscode-button-background)',
-                color: 'var(--vscode-button-foreground)',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: '2px',
-                fontSize: '10px',
-                cursor: 'pointer'
-              }}
-            >
-              Export
-            </button>
           </div>
         </Panel>
       </ReactFlow>
