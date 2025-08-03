@@ -23,11 +23,6 @@
         "command": "dbml-previewer.previewFromExplorer",
         "title": "Preview DBML",
         "category": "DBML Previewer"
-      },
-      {
-        "command": "dbml-previewer.helloWorld",
-        "title": "Hello World",
-        "category": "DBML Previewer"
       }
     ],
     "menus": {
@@ -56,6 +51,10 @@
         {
           "command": "dbml-previewer.preview",
           "when": "resourceExtname == .dbml"
+        },
+        {
+          "command": "dbml-previewer.previewFromExplorer",
+          "when": "false"
         }
       ]
     },
