@@ -37,6 +37,7 @@ const ColumnNode = ({ data }) => {
         <Handle
           type="target"
           position={Position.Left}
+          id="target"
           style={{
             left: '-4px',
             background: 'var(--vscode-charts-lines)',
@@ -91,6 +92,7 @@ const ColumnNode = ({ data }) => {
         <Handle
           type="source"
           position={Position.Right}
+          id="source"
           style={{
             right: '-4px',
             background: 'var(--vscode-charts-lines)',

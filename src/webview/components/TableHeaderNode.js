@@ -7,7 +7,8 @@ const TableHeaderNode = ({ data }) => {
   const headerHeight = 42; // Header section height
   const noteHeight = table.note ? 30 : 0; // Note section height if present
   const columnHeight = 30; // Height per column
-  const totalHeight = headerHeight + noteHeight + (columnCount * columnHeight);
+  const tablePadding = 8; // Padding around column area
+  const totalHeight = headerHeight + noteHeight + (columnCount * columnHeight) + (tablePadding * 2);
 
   return (
     <div style={{
@@ -51,6 +52,19 @@ const TableHeaderNode = ({ data }) => {
           alignItems: 'center'
         }}>
           {table.note}
+        </div>
+      )}
+      
+      {/* Column Area - Visual padding container */}
+      {columnCount > 0 && (
+        <div style={{
+          padding: `${tablePadding}px`,
+          borderTop: table.note ? 'none' : '1px solid var(--vscode-panel-border)',
+          background: 'var(--vscode-editor-background)',
+          height: `${columnCount * columnHeight + (tablePadding * 2)}px`,
+          boxSizing: 'border-box'
+        }}>
+          {/* Column nodes will be positioned within this padded area */}
         </div>
       )}
     </div>

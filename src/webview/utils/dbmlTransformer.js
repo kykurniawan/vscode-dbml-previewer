@@ -45,12 +45,61 @@ const calculateTableWidth = (table) => {
   // Find the widest column
   const maxColumnWidth = Math.max(...table.fields.map(calculateColumnWidth));
   
-  // Add margin for parent container (4px margin + borders)
-  return maxColumnWidth + 8;
+  // Add padding for parent container (8px padding on each side + borders)
+  const tablePadding = 8;
+  return maxColumnWidth + (tablePadding * 2);
 };
 
 /**
- * Analyze column relationships from DBML refs
+ * Extract field-level references from tables by looking at field definitions
+ * @param {Array} tables - Array of table objects
+ * @returns {Object} Object mapping table names to column handle info
+ */
+const analyzeColumnRelationshipsFromTables = (tables) => {
+  const columnHandles = {};
+  
+  tables.forEach(table => {
+    table.fields?.forEach(field => {
+      // Look for field-level references in the field's type or settings
+      // This is a fallback since the parser doesn't extract inline refs properly
+      
+      // Check if field name suggests it's a foreign key (ends with _id)
+      if (field.name.endsWith('_id') && field.name !== 'id') {
+        // Guess the target table name by removing _id suffix
+        const potentialTargetTable = field.name.replace('_id', 's'); // e.g., author_id -> authors
+        const potentialTargetTable2 = field.name.replace('_id', ''); // e.g., category_id -> category
+        
+        // Initialize table objects if they don't exist
+        if (!columnHandles[table.name]) {
+          columnHandles[table.name] = {};
+        }
+        
+        // Mark this column as a source (foreign key)
+        columnHandles[table.name][field.name] = { isSource: true, isTarget: false };
+        
+        // Try to find target tables and mark their 'id' fields as targets
+        tables.forEach(targetTable => {
+          if (targetTable.name === potentialTargetTable || 
+              targetTable.name === potentialTargetTable2 ||
+              targetTable.name === field.name.replace('_id', '')) {
+            
+            if (!columnHandles[targetTable.name]) {
+              columnHandles[targetTable.name] = {};
+            }
+            
+            // Mark the 'id' field of the target table as a target
+            columnHandles[targetTable.name]['id'] = { isSource: false, isTarget: true };
+          }
+        });
+      }
+    });
+  });
+  
+  return columnHandles;
+};
+
+/**
+ * Analyze column relationships from DBML refs (fallback method)
  * @param {Array} refs - Array of reference objects
  * @returns {Object} Object mapping table names to column handle info
  */
@@ -66,17 +115,20 @@ const analyzeColumnRelationships = (refs) => {
     const sourceColumn = sourceEndpoint.fieldName;
     const targetColumn = targetEndpoint.fieldName;
     
-    // Initialize table objects if they don't exist
-    if (!columnHandles[sourceTable]) {
-      columnHandles[sourceTable] = {};
+    // Only process if we have field names
+    if (sourceColumn && targetColumn) {
+      // Initialize table objects if they don't exist
+      if (!columnHandles[sourceTable]) {
+        columnHandles[sourceTable] = {};
+      }
+      if (!columnHandles[targetTable]) {
+        columnHandles[targetTable] = {};
+      }
+      
+      // Mark columns that have relationships
+      columnHandles[sourceTable][sourceColumn] = { isSource: true, isTarget: false };
+      columnHandles[targetTable][targetColumn] = { isSource: false, isTarget: true };
     }
-    if (!columnHandles[targetTable]) {
-      columnHandles[targetTable] = {};
-    }
-    
-    // Mark columns that have relationships
-    columnHandles[sourceTable][sourceColumn] = { isSource: true, isTarget: false };
-    columnHandles[targetTable][targetColumn] = { isSource: false, isTarget: true };
   });
   
   return columnHandles;
@@ -90,8 +142,19 @@ export const transformDBMLToNodes = (dbmlData) => {
   const tables = dbmlData.schemas[0].tables;
   const refs = dbmlData.schemas[0].refs || [];
 
-  // Analyze column relationships
-  const columnHandles = analyzeColumnRelationships(refs);
+  // Analyze column relationships using both methods
+  const columnHandlesFromRefs = analyzeColumnRelationships(refs);
+  const columnHandlesFromTables = analyzeColumnRelationshipsFromTables(tables);
+  
+  // Merge both results, with refs taking priority
+  const columnHandles = { ...columnHandlesFromTables };
+  Object.keys(columnHandlesFromRefs).forEach(tableName => {
+    if (!columnHandles[tableName]) {
+      columnHandles[tableName] = {};
+    }
+    Object.assign(columnHandles[tableName], columnHandlesFromRefs[tableName]);
+  });
+  
 
   // Create parent-child node structure
   const nodes = [];
@@ -116,8 +179,9 @@ export const transformDBMLToNodes = (dbmlData) => {
     // Create column nodes (children)
     const headerHeight = 42;
     const noteHeight = table.note ? 30 : 0;
-    const startY = headerHeight + noteHeight;
-    const columnWidth = tableWidth - 4; // Subtract margin
+    const tablePadding = 8;
+    const startY = headerHeight + noteHeight + tablePadding; // Include padding offset
+    const columnWidth = tableWidth - (tablePadding * 2); // Subtract both side paddings
     
     table.fields?.forEach((column, columnIndex) => {
       const columnHandleInfo = columnHandles[table.name]?.[column.name];
@@ -125,8 +189,8 @@ export const transformDBMLToNodes = (dbmlData) => {
         id: `${table.name}.${column.name}`,
         type: 'column',
         position: { 
-          x: 2, // Small margin from parent edge
-          y: startY + (columnIndex * 30) // Position after header and note
+          x: tablePadding, // Position within padding
+          y: startY + (columnIndex * 30) // Position after header, note, and padding
         },
         parentId: `table-${table.name}`,
         data: {
@@ -143,7 +207,65 @@ export const transformDBMLToNodes = (dbmlData) => {
   });
 
   // Create edges for relationships connecting column nodes directly
-  const edges = refs.map((ref, index) => {
+  const edges = [];
+  
+  // Generate edges from inferred column relationships
+  Object.keys(columnHandles).forEach(tableName => {
+    Object.keys(columnHandles[tableName]).forEach(columnName => {
+      const columnInfo = columnHandles[tableName][columnName];
+      
+      if (columnInfo.isSource) {
+        // This is a foreign key column, find its target
+        const foreignKeyName = columnName; // e.g., "author_id"
+        const targetTableName = foreignKeyName.replace('_id', ''); // e.g., "author"
+        
+        // Look for the actual target table (could be plural)
+        const targetTable = tables.find(t => 
+          t.name === targetTableName || 
+          t.name === targetTableName + 's' ||
+          t.name === targetTableName.slice(0, -1) // handle "categories" -> "category_id"
+        );
+        
+        if (targetTable) {
+          const targetColumn = 'id'; // Assume foreign keys reference 'id' field
+          
+          edges.push({
+            id: `${tableName}.${columnName}-${targetTable.name}.${targetColumn}`,
+            source: `${tableName}.${columnName}`,
+            target: `${targetTable.name}.${targetColumn}`,
+            sourceHandle: 'source',
+            targetHandle: 'target',
+            type: 'smoothstep',
+            animated: true,
+            style: {
+              stroke: 'var(--vscode-charts-lines)',
+              strokeWidth: 2,
+              strokeDasharray: '0',
+            },
+            markerEnd: {
+              type: 'arrowclosed',
+              color: 'var(--vscode-charts-lines)',
+              width: 20,
+              height: 20,
+            },
+            label: '1:M', // Default relationship type
+            labelStyle: {
+              fill: 'var(--vscode-editor-foreground)',
+              fontSize: 10,
+              fontWeight: 'bold',
+            },
+            labelBgStyle: {
+              fill: 'var(--vscode-editor-background)',
+              fillOpacity: 0.8,
+            },
+          });
+        }
+      }
+    });
+  });
+  
+  // Also try to create edges from the original refs (in case they have field info)
+  refs.forEach((ref, index) => {
     const sourceEndpoint = ref.endpoints[0];
     const targetEndpoint = ref.endpoints[1];
     
@@ -152,26 +274,44 @@ export const transformDBMLToNodes = (dbmlData) => {
     const sourceColumn = sourceEndpoint.fieldName;
     const targetColumn = targetEndpoint.fieldName;
     
-    return {
-      id: `${sourceTable}.${sourceColumn}-${targetTable}.${targetColumn}-${index}`,
-      source: `${sourceTable}.${sourceColumn}`,
-      target: `${targetTable}.${targetColumn}`,
-      type: 'smoothstep',
-      animated: true,
-      style: {
-        stroke: 'var(--vscode-charts-lines)',
-        strokeWidth: 2,
-      },
-      markerEnd: {
-        type: 'arrowclosed',
-        color: 'var(--vscode-charts-lines)',
-      },
-      label: getRelationshipLabel(ref),
-      labelStyle: {
-        fill: 'var(--vscode-editor-foreground)',
-        fontSize: 10,
-      },
-    };
+    // Only add if we have field names and haven't already added this edge
+    if (sourceColumn && targetColumn) {
+      const edgeId = `${sourceTable}.${sourceColumn}-${targetTable}.${targetColumn}`;
+      const alreadyExists = edges.some(e => e.id.includes(edgeId));
+      
+      if (!alreadyExists) {
+        edges.push({
+          id: `${edgeId}-${index}`,
+          source: `${sourceTable}.${sourceColumn}`,
+          target: `${targetTable}.${targetColumn}`,
+          sourceHandle: 'source',
+          targetHandle: 'target',
+          type: 'smoothstep',
+          animated: true,
+          style: {
+            stroke: 'var(--vscode-charts-lines)',
+            strokeWidth: 2,
+            strokeDasharray: '0',
+          },
+          markerEnd: {
+            type: 'arrowclosed',
+            color: 'var(--vscode-charts-lines)',
+            width: 20,
+            height: 20,
+          },
+          label: getRelationshipLabel(ref),
+          labelStyle: {
+            fill: 'var(--vscode-editor-foreground)',
+            fontSize: 10,
+            fontWeight: 'bold',
+          },
+          labelBgStyle: {
+            fill: 'var(--vscode-editor-background)',
+            fillOpacity: 0.8,
+          },
+        });
+      }
+    }
   });
 
   // Apply auto-layout using dagre (only for table header nodes)
@@ -219,10 +359,11 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 
   // Calculate table dimensions based on content
   const tableDimensions = {};
+  const tablePadding = 8;
   tableHeaderNodes.forEach((tableNode) => {
     const { table, columnCount, tableWidth } = tableNode.data;
     const noteHeight = table.note ? 30 : 0;
-    const totalHeight = headerHeight + noteHeight + (columnCount * columnHeight);
+    const totalHeight = headerHeight + noteHeight + (columnCount * columnHeight) + (tablePadding * 2);
     
     tableDimensions[tableNode.id] = {
       width: tableWidth,
