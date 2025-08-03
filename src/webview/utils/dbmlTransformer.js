@@ -1,20 +1,13 @@
 import dagre from 'dagre';
 
 /**
- * Analyze table relationships to determine which columns need handles
- * @param {Array} tables - Array of table objects
+ * Analyze column relationships from DBML refs
  * @param {Array} refs - Array of reference objects
  * @returns {Object} Object mapping table names to column handle info
  */
-const analyzeColumnRelationships = (tables, refs) => {
+const analyzeColumnRelationships = (refs) => {
   const columnHandles = {};
   
-  // Initialize empty objects for each table
-  tables.forEach(table => {
-    columnHandles[table.name] = {};
-  });
-  
-  // Process each reference to determine source and target handles
   refs.forEach(ref => {
     const sourceEndpoint = ref.endpoints[0];
     const targetEndpoint = ref.endpoints[1];
@@ -24,23 +17,17 @@ const analyzeColumnRelationships = (tables, refs) => {
     const sourceColumn = sourceEndpoint.fieldName;
     const targetColumn = targetEndpoint.fieldName;
     
-    // Mark source column as needing a source handle
+    // Initialize table objects if they don't exist
     if (!columnHandles[sourceTable]) {
       columnHandles[sourceTable] = {};
     }
-    if (!columnHandles[sourceTable][sourceColumn]) {
-      columnHandles[sourceTable][sourceColumn] = { isSource: false, isTarget: false };
-    }
-    columnHandles[sourceTable][sourceColumn].isSource = true;
-    
-    // Mark target column as needing a target handle
     if (!columnHandles[targetTable]) {
       columnHandles[targetTable] = {};
     }
-    if (!columnHandles[targetTable][targetColumn]) {
-      columnHandles[targetTable][targetColumn] = { isSource: false, isTarget: false };
-    }
-    columnHandles[targetTable][targetColumn].isTarget = true;
+    
+    // Mark columns that have relationships
+    columnHandles[sourceTable][sourceColumn] = { isSource: true, isTarget: false };
+    columnHandles[targetTable][targetColumn] = { isSource: false, isTarget: true };
   });
   
   return columnHandles;
@@ -54,8 +41,8 @@ export const transformDBMLToNodes = (dbmlData) => {
   const tables = dbmlData.schemas[0].tables;
   const refs = dbmlData.schemas[0].refs || [];
 
-  // Analyze column relationships to determine which columns need handles
-  const columnHandles = analyzeColumnRelationships(tables, refs);
+  // Analyze column relationships
+  const columnHandles = analyzeColumnRelationships(refs);
 
   // Create nodes for tables
   const nodes = tables.map((table, index) => ({
@@ -78,12 +65,21 @@ export const transformDBMLToNodes = (dbmlData) => {
     const sourceColumn = sourceEndpoint.fieldName;
     const targetColumn = targetEndpoint.fieldName;
     
+    // Use column-specific handles if available, otherwise fall back to table handles
+    const sourceHandleId = columnHandles[sourceTable] && columnHandles[sourceTable][sourceColumn] 
+      ? sourceColumn 
+      : "table-source";
+      
+    const targetHandleId = columnHandles[targetTable] && columnHandles[targetTable][targetColumn]
+      ? targetColumn
+      : "table-target";
+    
     return {
       id: `${sourceTable}.${sourceColumn}-${targetTable}.${targetColumn}-${index}`,
       source: sourceTable,
       target: targetTable,
-      sourceHandle: `${sourceTable}.${sourceColumn}`,
-      targetHandle: `${targetTable}.${targetColumn}`,
+      sourceHandle: sourceHandleId,
+      targetHandle: targetHandleId,
       type: 'smoothstep',
       animated: true,
       style: {

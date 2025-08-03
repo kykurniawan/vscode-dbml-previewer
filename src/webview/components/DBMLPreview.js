@@ -18,7 +18,7 @@ const nodeTypes = {
 };
 
 const DBMLPreview = ({ initialContent }) => {
-  console.log('DBMLPreview component rendering with:', initialContent);
+  console.log('🎯 DBMLPreview component rendering with:', initialContent);
   
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -27,9 +27,11 @@ const DBMLPreview = ({ initialContent }) => {
   const [parseError, setParseError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log('🔄 State initialized - nodes:', nodes.length, 'edges:', edges.length);
+
   // Disabled manual connections for preview-only mode
   const onConnect = useCallback(() => {
-    // No-op: Manual connections are disabled in preview mode
+    // No-op: Manual connections disabled in preview mode
   }, []);
 
   // Parse DBML content
@@ -89,10 +91,18 @@ const DBMLPreview = ({ initialContent }) => {
 
   // Transform DBML data to nodes and edges when data changes
   useEffect(() => {
+    console.log('🔄 Transform effect triggered, dbmlData:', dbmlData);
     if (dbmlData) {
-      const { nodes: newNodes, edges: newEdges } = transformDBMLToNodes(dbmlData);
-      setNodes(newNodes);
-      setEdges(newEdges);
+      try {
+        const { nodes: newNodes, edges: newEdges } = transformDBMLToNodes(dbmlData);
+        console.log('✅ Transform successful - nodes:', newNodes.length, 'edges:', newEdges.length);
+        console.log('📊 Generated nodes:', newNodes);
+        console.log('🔗 Generated edges:', newEdges);
+        setNodes(newNodes);
+        setEdges(newEdges);
+      } catch (error) {
+        console.error('❌ Error transforming DBML data:', error);
+      }
     }
   }, [dbmlData, setNodes, setEdges]);
 
@@ -201,15 +211,8 @@ const DBMLPreview = ({ initialContent }) => {
         nodeTypes={nodeTypes}
         fitView
         attributionPosition="bottom-left"
-        connectionMode="loose"
-        elementsSelectable={true}
         nodesConnectable={false}
         nodesDraggable={true}
-        panOnDrag={true}
-        panOnScroll={true}
-        zoomOnScroll={true}
-        zoomOnPinch={true}
-        zoomOnDoubleClick={false}
       >
         <Controls />
         <Background />

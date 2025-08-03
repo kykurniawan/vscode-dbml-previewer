@@ -8,7 +8,7 @@ const TableNode = ({ data }) => {
     if (column.pk) return '🔑';
     if (column.unique) return '⚡';
     if (column.not_null) return '❗';
-    return '◦';
+    return ''; // Remove the bullet point
   };
 
   const hasColumnHandle = (columnName) => {
@@ -64,18 +64,26 @@ const TableNode = ({ data }) => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>{getColumnIcon(column)}</span>
                 <span style={{ 
-                  fontWeight: column.pk ? 'bold' : 'normal',
-                  color: hasColumnHandle(column.name) ? 'var(--vscode-editor-foreground)' : 'var(--vscode-editor-foreground)'
+                  fontSize: '12px',
+                  lineHeight: '1',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  width: '12px',
+                  height: '12px',
+                  justifyContent: 'center'
                 }}>
+                  {getColumnIcon(column)}
+                </span>
+                <span style={{ fontWeight: column.pk ? 'bold' : 'normal' }}>
                   {column.name}
                 </span>
                 {hasColumnHandle(column.name) && (
                   <span style={{ 
                     fontSize: '10px', 
                     color: 'var(--vscode-charts-lines)',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    lineHeight: '1'
                   }}>
                     🔗
                   </span>
@@ -94,37 +102,33 @@ const TableNode = ({ data }) => {
                 <Handle
                   type="source"
                   position={Position.Right}
-                  id={`${table.name}.${column.name}`}
+                  id={`${column.name}`}
                   style={{
-                    right: '-6px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
+                    right: '-4px',
                     background: 'var(--vscode-charts-lines)',
                     border: '2px solid var(--vscode-editor-background)',
-                    width: '8px',
-                    height: '8px',
+                    width: '6px',
+                    height: '6px',
                     borderRadius: '50%'
                   }}
                 />
               )}
               
-              {handleInfo && handleInfo.isTarget && (
+              {/* {handleInfo && handleInfo.isTarget && (
                 <Handle
                   type="target"
                   position={Position.Left}
-                  id={`${table.name}.${column.name}`}
+                  id={`${column.name}`}
                   style={{
-                    left: '-6px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
+                    left: '-4px',
                     background: 'var(--vscode-charts-lines)',
                     border: '2px solid var(--vscode-editor-background)',
-                    width: '8px',
-                    height: '8px',
+                    width: '6px',
+                    height: '6px',
                     borderRadius: '50%'
                   }}
                 />
-              )}
+              )} */}
             </div>
           );
         })}
@@ -144,7 +148,29 @@ const TableNode = ({ data }) => {
         </div>
       )}
 
-      {/* Note: Generic table handles removed - now using column-specific handles */}
+      {/* Generic table handles for fallback connections */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="table-target"
+        style={{
+          background: 'var(--vscode-button-background)',
+          border: '2px solid var(--vscode-button-foreground)',
+          width: '8px',
+          height: '8px'
+        }}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="table-source"
+        style={{
+          background: 'var(--vscode-button-background)',
+          border: '2px solid var(--vscode-button-foreground)',
+          width: '8px',
+          height: '8px'
+        }}
+      />
     </div>
   );
 };
