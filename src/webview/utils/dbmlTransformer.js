@@ -166,7 +166,7 @@ const analyzeColumnRelationships = (refs, tables) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}) => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
@@ -346,7 +346,7 @@ export const transformDBMLToNodes = (dbmlData) => {
   // We'll add TableGroup nodes after layout calculation to position them correctly
 
   // Apply auto-layout using dagre (for table header nodes and table groups)
-  const layoutedElements = getLayoutedElements(nodes, edges, tableGroups);
+  const layoutedElements = getLayoutedElements(nodes, edges, tableGroups, savedPositions);
 
   return {
     nodes: layoutedElements.nodes,
@@ -356,7 +356,7 @@ export const transformDBMLToNodes = (dbmlData) => {
 };
 
 
-const getLayoutedElements = (nodes, edges, tableGroups = [], direction = 'TB') => {
+const getLayoutedElements = (nodes, edges, tableGroups = [], savedPositions = {}, direction = 'TB') => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
 
@@ -371,10 +371,15 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], direction = 'TB') =
 
   // Only add table header nodes to dagre for layout calculation
   const tableHeaderNodes = nodes.filter(node => node.type === 'tableHeader');
+  
+  // Separate nodes into those with saved positions and those needing auto-layout
+  const nodesWithSavedPositions = [];
+  const nodesNeedingLayout = [];
 
-  // Calculate table dimensions based on content
+  // Calculate table dimensions and separate nodes by layout needs
   const tableDimensions = {};
   const tablePadding = 8;
+  
   tableHeaderNodes.forEach((tableNode) => {
     const { table, columnCount, tableWidth } = tableNode.data;
     const noteHeight = table.note ? 30 : 0;
@@ -384,9 +389,17 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], direction = 'TB') =
       width: tableWidth,
       height: totalHeight
     };
+    
+    // Check if node has saved position
+    if (savedPositions[tableNode.id]) {
+      nodesWithSavedPositions.push(tableNode);
+    } else {
+      nodesNeedingLayout.push(tableNode);
+    }
   });
 
-  tableHeaderNodes.forEach((node) => {
+  // Only add nodes needing layout to dagre
+  nodesNeedingLayout.forEach((node) => {
     const dimensions = tableDimensions[node.id];
     dagreGraph.setNode(node.id, {
       width: dimensions.width,
@@ -394,7 +407,9 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], direction = 'TB') =
     });
   });
 
-  // Add edges between table headers for dagre layout
+  // Add edges between table headers for dagre layout (only for nodes needing layout)
+  const nodesNeedingLayoutIds = new Set(nodesNeedingLayout.map(n => n.id));
+  
   edges.forEach((edge) => {
     // Extract table name from column ID (schema.table.column -> schema.table)
     const sourceTableParts = edge.source.split('.');
@@ -411,8 +426,10 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], direction = 'TB') =
     const sourceTableId = `table-${sourceTableName}`;
     const targetTableId = `table-${targetTableName}`;
 
-    // Only add edge if it connects different tables
-    if (sourceTableId !== targetTableId) {
+    // Only add edge if it connects different tables and both need layout
+    if (sourceTableId !== targetTableId && 
+        nodesNeedingLayoutIds.has(sourceTableId) && 
+        nodesNeedingLayoutIds.has(targetTableId)) {
       dagreGraph.setEdge(sourceTableId, targetTableId);
     }
   });
@@ -422,15 +439,28 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], direction = 'TB') =
   // Position table header nodes and their child column nodes
   const layoutedNodes = nodes.map((node) => {
     if (node.type === 'tableHeader') {
-      const nodeWithPosition = dagreGraph.node(node.id);
-      const dimensions = tableDimensions[node.id];
-      return {
-        ...node,
-        position: {
-          x: nodeWithPosition.x - dimensions.width / 2,
-          y: nodeWithPosition.y - dimensions.height / 2,
-        },
-      };
+      // Use saved position if available, otherwise use dagre layout
+      if (savedPositions[node.id]) {
+        return {
+          ...node,
+          position: {
+            x: savedPositions[node.id].x,
+            y: savedPositions[node.id].y,
+          },
+        };
+      } else if (nodesNeedingLayoutIds.has(node.id)) {
+        const nodeWithPosition = dagreGraph.node(node.id);
+        const dimensions = tableDimensions[node.id];
+        return {
+          ...node,
+          position: {
+            x: nodeWithPosition.x - dimensions.width / 2,
+            y: nodeWithPosition.y - dimensions.height / 2,
+          },
+        };
+      }
+      // Fallback to original position (shouldn't happen)
+      return node;
     } else if (node.type === 'column') {
       // Column nodes keep their relative positions to parents
       return node;

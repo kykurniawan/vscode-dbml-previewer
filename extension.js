@@ -80,7 +80,7 @@ function createPreviewPanel(context, filePath, content) {
 	);
 
 	// Set the webview content
-	panel.webview.html = getWebviewContent(content, fileName, panel.webview);
+	panel.webview.html = getWebviewContent(content, fileName, filePath, panel.webview);
 
 	// Handle messages from the webview (optional)
 	panel.webview.onDidReceiveMessage(
@@ -121,10 +121,11 @@ function createPreviewPanel(context, filePath, content) {
  * Generate HTML content for the webview
  * @param {string} content 
  * @param {string} fileName 
+ * @param {string} filePath
  * @param {vscode.Webview} webview
  * @returns {string}
  */
-function getWebviewContent(content, fileName, webview) {
+function getWebviewContent(content, fileName, filePath, webview) {
 	// Get the local path to main script run in the webview
 	const scriptPathOnDisk = vscode.Uri.file(path.join(__dirname, 'dist', 'webview.js'));
 	const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -153,6 +154,7 @@ function getWebviewContent(content, fileName, webview) {
 		<div id="root"></div>
 		<script>
 			window.initialContent = ${JSON.stringify(content)};
+			window.filePath = ${JSON.stringify(filePath)};
 		</script>
 		<script src="${scriptUri}"></script>
 	</body>
@@ -160,10 +162,7 @@ function getWebviewContent(content, fileName, webview) {
 }
 
 function deactivate() {
-	// Clean up webview panel
-	if (panel) {
-		panel.dispose();
-	}
+	// Extension deactivation - panels are automatically cleaned up by VS Code
 }
 
 module.exports = {

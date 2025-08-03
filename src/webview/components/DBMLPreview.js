@@ -16,6 +16,13 @@ import ColumnNode from './ColumnNode';
 import TableGroupNode from './TableGroupNode';
 import EdgeTooltip from './EdgeTooltip';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
+import { 
+  saveLayout, 
+  loadLayout, 
+  generateFileId, 
+  extractTablePositions, 
+  cleanupObsoletePositions 
+} from '../utils/layoutStorage';
 
 const nodeTypes = {
   table: TableNode,
@@ -37,6 +44,9 @@ const DBMLPreview = ({ initialContent }) => {
   const [tooltipData, setTooltipData] = useState(null);
   const [tableGroups, setTableGroups] = useState([]);
   const [draggedGroupPositions, setDraggedGroupPositions] = useState(new Map());
+  const [fileId, setFileId] = useState(null);
+  const [savedPositions, setSavedPositions] = useState({});
+  const [filePath, setFilePath] = useState(null);
 
   console.log('🔄 State initialized - nodes:', nodes.length, 'edges:', edges.length);
 
@@ -139,8 +149,44 @@ const DBMLPreview = ({ initialContent }) => {
     return updatedNodes;
   }, []);
 
+  // Save layout when table positions change
+  const saveCurrentLayout = useCallback(() => {
+    if (fileId) {
+      // Use a fresh reference to nodes via setNodes callback
+      setNodes(currentNodes => {
+        if (currentNodes.length > 0) {
+          const positions = extractTablePositions(currentNodes);
+          console.log('💾 Saving layout for fileId:', fileId);
+          console.log('💾 Current nodes count:', currentNodes.length);
+          console.log('💾 Extracted positions:', positions);
+          setSavedPositions(positions);
+          saveLayout(fileId, positions);
+          console.log('💾 Layout saved successfully');
+        }
+        return currentNodes; // Don't modify nodes, just extract positions
+      });
+    }
+  }, [fileId]);
+
+  // Reset layout to auto-layout
+  const resetLayout = useCallback(() => {
+    if (fileId) {
+      setSavedPositions({});
+      saveLayout(fileId, {});
+      console.log('🔄 Layout reset');
+      // Trigger re-transform with empty positions
+      if (dbmlData) {
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {});
+        setNodes(newNodes);
+        setEdges(newEdges);
+        setTableGroups(newTableGroups || []);
+      }
+    }
+  }, [fileId, dbmlData, setNodes, setEdges]);
+
   // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
+    console.log('🔄 handleNodesChange called with', changes.length, 'changes:', changes);
     // Track group drag start positions
     const groupDragStartChanges = changes.filter(change =>
       change.type === 'position' &&
@@ -179,24 +225,38 @@ const DBMLPreview = ({ initialContent }) => {
           const offsetX = endPosition.x - startPosition.x;
           const offsetY = endPosition.y - startPosition.y;
 
-          // Move member tables
+          // Move member tables and update saved positions
           setNodes(currentNodes => {
             const updatedNodes = [...currentNodes];
             const groupNode = updatedNodes.find(node => node.id === groupId);
             const groupName = groupNode?.data?.tableGroup?.name;
 
             if (groupName && (offsetX !== 0 || offsetY !== 0)) {
+              const updatedPositions = {...savedPositions};
+              
               updatedNodes.forEach((node, index) => {
                 if (node.type === 'tableHeader' && node.data?.tableGroup?.name === groupName) {
+                  const newPosition = {
+                    x: node.position.x + offsetX,
+                    y: node.position.y + offsetY
+                  };
+                  
                   updatedNodes[index] = {
                     ...node,
-                    position: {
-                      x: node.position.x + offsetX,
-                      y: node.position.y + offsetY
-                    }
+                    position: newPosition
                   };
+                  
+                  // Update saved positions for member tables
+                  updatedPositions[node.id] = newPosition;
                 }
               });
+              
+              // Update saved positions state and storage
+              setSavedPositions(updatedPositions);
+              if (fileId) {
+                saveLayout(fileId, updatedPositions);
+                console.log('💾 Layout saved for table group:', groupName, updatedPositions);
+              }
             }
 
             return updatedNodes;
@@ -215,21 +275,37 @@ const DBMLPreview = ({ initialContent }) => {
     // Apply the standard changes
     onNodesChange(changes);
 
-    // Check if any individual table positions changed (not group drag)
-    const hasTablePositionChanges = changes.some(change =>
+    // Check for any table position changes (individual or group)
+    const hasAnyTablePositionChanges = changes.some(change =>
       change.type === 'position' &&
       change.dragging === false &&
-      !change.id.startsWith('tablegroup-') &&
       change.id.startsWith('table-')
     );
 
-    if (hasTablePositionChanges && tableGroups.length > 0) {
-      // Only recalculate bounds for individual table movements
+    // Check if group drag ended (we already saved positions above)
+    const hasGroupDragEnd = groupDragEndChanges.length > 0;
+
+    console.log('🔍 Position changes detected:', hasAnyTablePositionChanges);
+    console.log('🔍 Group drag ended:', hasGroupDragEnd);
+
+    // Save layout for any table position changes (except when group drag already saved)
+    if (hasAnyTablePositionChanges && !hasGroupDragEnd) {
+      console.log('✅ Will save layout for table position changes');
+      setTimeout(() => {
+        console.log('🔄 Saving layout for table position changes');
+        saveCurrentLayout();
+      }, 100);
+    } else {
+      console.log('❌ Not saving layout - hasAnyTablePositionChanges:', hasAnyTablePositionChanges, 'hasGroupDragEnd:', hasGroupDragEnd);
+    }
+    
+    // Recalculate bounds for table groups if needed (for both individual and group moves)
+    if ((hasAnyTablePositionChanges || hasGroupDragEnd) && tableGroups.length > 0) {
       setTimeout(() => {
         setNodes(currentNodes => recalculateTableGroupBounds(currentNodes, tableGroups));
-      }, 0);
+      }, 200); // Slightly longer delay to ensure group positions are saved first
     }
-  }, [onNodesChange, tableGroups, recalculateTableGroupBounds, setNodes, nodes, draggedGroupPositions]);
+  }, [onNodesChange, tableGroups, recalculateTableGroupBounds, setNodes, draggedGroupPositions, saveCurrentLayout, savedPositions]);
 
   // Parse DBML content
   const parseDBML = useCallback(async (content) => {
@@ -252,6 +328,25 @@ const DBMLPreview = ({ initialContent }) => {
       setDbmlData(null);
     } finally {
       setIsLoading(false);
+    }
+  }, []);
+
+  // Initialize file path and load saved layout
+  useEffect(() => {
+    // Get file path from window global (set by extension)
+    const windowFilePath = window.filePath;
+    if (windowFilePath) {
+      setFilePath(windowFilePath);
+      
+      // Generate file ID based on file path
+      const newFileId = generateFileId(windowFilePath);
+      console.log('🆔 Generated file ID from path:', newFileId);
+      setFileId(newFileId);
+      
+      // Load saved positions for this file
+      const positions = loadLayout(newFileId);
+      console.log('🔍 Loaded positions for file', newFileId, ':', positions);
+      setSavedPositions(positions);
     }
   }, []);
 
@@ -288,14 +383,33 @@ const DBMLPreview = ({ initialContent }) => {
 
   // Transform DBML data to nodes and edges when data changes
   useEffect(() => {
-    console.log('🔄 Transform effect triggered, dbmlData:', dbmlData);
-    if (dbmlData) {
+    console.log('🔄 Transform effect triggered, dbmlData exists:', !!dbmlData, 'fileId:', fileId);
+    if (dbmlData && fileId !== null) {
       try {
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData);
+        // Get current saved positions at execution time
+        const currentSavedPositions = loadLayout(fileId);
+        console.log('💾 Current saved positions:', currentSavedPositions);
+        
+        // Clean up obsolete positions first
+        const tableHeaderIds = [];
+        dbmlData.schemas?.forEach(schema => {
+          schema.tables?.forEach(table => {
+            const fullName = schema.name && dbmlData.schemas.length > 1 ? `${schema.name}.${table.name}` : table.name;
+            tableHeaderIds.push(`table-${fullName}`);
+          });
+        });
+        
+        const cleanedPositions = cleanupObsoletePositions(currentSavedPositions, tableHeaderIds);
+        if (Object.keys(cleanedPositions).length !== Object.keys(currentSavedPositions).length) {
+          setSavedPositions(cleanedPositions);
+          saveLayout(fileId, cleanedPositions);
+        }
+        
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions);
         console.log('✅ Transform successful - nodes:', newNodes.length, 'edges:', newEdges.length, 'tableGroups:', newTableGroups?.length || 0);
-        console.log('📊 Generated nodes:', newNodes);
-        console.log('🔗 Generated edges:', newEdges);
-        console.log('📦 TableGroups:', newTableGroups);
+        console.log('💾 Using saved positions:', cleanedPositions);
+        console.log('📊 First few generated nodes with positions:', newNodes.filter(n => n.type === 'tableHeader').slice(0, 3).map(n => ({ id: n.id, position: n.position })));
+        console.log('📦 TableGroups:', newTableGroups?.length || 0);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
@@ -303,7 +417,7 @@ const DBMLPreview = ({ initialContent }) => {
         console.error('❌ Error transforming DBML data:', error);
       }
     }
-  }, [dbmlData, setNodes, setEdges]);
+  }, [dbmlData, fileId, setNodes, setEdges]);
 
   // Update edge styles based on selection state
   useEffect(() => {
@@ -483,6 +597,22 @@ const DBMLPreview = ({ initialContent }) => {
             <div style={{ fontSize: '10px', color: 'var(--vscode-descriptionForeground)' }}>
               {dbmlData.schemas?.length || 0} schema{(dbmlData.schemas?.length || 0) !== 1 ? 's' : ''}
             </div>
+            <button
+              onClick={resetLayout}
+              style={{
+                background: 'var(--vscode-button-secondaryBackground)',
+                color: 'var(--vscode-button-secondaryForeground)',
+                border: '1px solid var(--vscode-button-border)',
+                padding: '4px 8px',
+                borderRadius: '2px',
+                fontSize: '10px',
+                cursor: 'pointer',
+                marginTop: '4px'
+              }}
+              title="Reset table positions to auto-layout"
+            >
+              Reset Layout
+            </button>
           </div>
         </Panel>
       </ReactFlow>
