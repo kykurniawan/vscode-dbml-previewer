@@ -13,6 +13,7 @@ import { Parser } from '@dbml/core';
 import TableNode from './TableNode';
 import TableHeaderNode from './TableHeaderNode';
 import ColumnNode from './ColumnNode';
+import EdgeTooltip from './EdgeTooltip';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 
 const nodeTypes = {
@@ -23,7 +24,7 @@ const nodeTypes = {
 
 const DBMLPreview = ({ initialContent }) => {
   console.log('🎯 DBMLPreview component rendering with:', initialContent);
-  
+
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [dbmlData, setDbmlData] = useState(null);
@@ -31,6 +32,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [parseError, setParseError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState(new Set());
+  const [tooltipData, setTooltipData] = useState(null);
 
   console.log('🔄 State initialized - nodes:', nodes.length, 'edges:', edges.length);
 
@@ -39,17 +41,39 @@ const DBMLPreview = ({ initialContent }) => {
     // No-op: Manual connections disabled in preview mode
   }, []);
 
-  // Handle edge click for selection toggle
+  // Handle edge click for tooltip display
   const onEdgeClick = useCallback((event, edge) => {
+    event.stopPropagation();
+
+    // Calculate tooltip position from mouse event
+    const rect = event.currentTarget.getBoundingClientRect?.() || { left: 0, top: 0 };
+    const position = {
+      x: event.clientX || (rect.left + 100),
+      y: event.clientY || (rect.top + 50)
+    };
+
+    // Also toggle selection for visual feedback
     setSelectedEdgeIds(prevSelected => {
       const newSelected = new Set(prevSelected);
       if (newSelected.has(edge.id)) {
         newSelected.delete(edge.id);
+        setTooltipData(null);
       } else {
+        newSelected.clear();
         newSelected.add(edge.id);
+        setTooltipData({
+          edge,
+          position
+        });
       }
       return newSelected;
     });
+  }, []);
+
+  // Handle tooltip close
+  const handleCloseTooltip = useCallback(() => {
+    setTooltipData(null);
+    setSelectedEdgeIds(new Set());
   }, []);
 
   // Parse DBML content
@@ -62,7 +86,7 @@ const DBMLPreview = ({ initialContent }) => {
 
     setIsLoading(true);
     setParseError(null);
-    
+
     try {
       const parser = new Parser();
       const parsed = parser.parse(content, 'dbmlv2');
@@ -86,10 +110,10 @@ const DBMLPreview = ({ initialContent }) => {
   // Listen for messages from VS Code extension
   useEffect(() => {
     const vscode = window.vscode;
-    
+
     const messageListener = (event) => {
       const message = event.data;
-      
+
       switch (message.type) {
         case 'updateContent':
           setDbmlContent(message.content || '');
@@ -98,10 +122,10 @@ const DBMLPreview = ({ initialContent }) => {
     };
 
     window.addEventListener('message', messageListener);
-    
+
     // Request initial data
     vscode.postMessage({ type: 'ready' });
-    
+
     return () => {
       window.removeEventListener('message', messageListener);
     };
@@ -129,25 +153,33 @@ const DBMLPreview = ({ initialContent }) => {
     if (edges.length > 0) {
       const updatedEdges = edges.map(edge => {
         const isSelected = selectedEdgeIds.has(edge.id);
+
         const currentStroke = edge.style?.stroke;
         const currentStrokeWidth = edge.style?.strokeWidth;
-        const expectedStroke = isSelected ? 'var(--vscode-button-background)' : 'var(--vscode-charts-lines)';
+        const currentDashArray = edge.style?.strokeDasharray;
+        const currentAnimated = edge.animated;
+
+        const expectedStroke = isSelected ? 'var(--vscode-focusBorder)' : 'var(--vscode-charts-lines)';
         const expectedStrokeWidth = isSelected ? 3 : 2;
-        
+        const expectedDashArray = isSelected ? '5 5' : '0';
+        const expectedAnimated = isSelected;
+
         // Only update if the style has actually changed
-        if (currentStroke !== expectedStroke || currentStrokeWidth !== expectedStrokeWidth) {
+        if (currentStroke !== expectedStroke || currentStrokeWidth !== expectedStrokeWidth || currentDashArray !== expectedDashArray || currentAnimated !== expectedAnimated) {
           return {
             ...edge,
+            animated: expectedAnimated,
             style: {
               ...edge.style,
               stroke: expectedStroke,
               strokeWidth: expectedStrokeWidth,
+              strokeDasharray: expectedDashArray,
             }
           };
         }
         return edge;
       });
-      
+
       // Only set edges if there are actual changes
       const hasChanges = updatedEdges.some((edge, index) => edge !== edges[index]);
       if (hasChanges) {
@@ -159,9 +191,9 @@ const DBMLPreview = ({ initialContent }) => {
   // Show error state
   if (parseError) {
     return (
-      <div style={{ 
-        width: '100vw', 
-        height: '100vh', 
+      <div style={{
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -204,14 +236,14 @@ const DBMLPreview = ({ initialContent }) => {
   // Show loading state
   if (isLoading) {
     return (
-      <div style={{ 
-        width: '100vw', 
-        height: '100vh', 
+      <div style={{
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        <div style={{ 
+        <div style={{
           color: 'var(--vscode-editor-foreground)',
           fontSize: '16px'
         }}>
@@ -224,22 +256,22 @@ const DBMLPreview = ({ initialContent }) => {
   // Show empty state
   if (!dbmlData || !dbmlData.schemas?.[0]?.tables?.length) {
     return (
-      <div style={{ 
-        width: '100vw', 
-        height: '100vh', 
+      <div style={{
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexDirection: 'column',
         gap: '8px'
       }}>
-        <div style={{ 
+        <div style={{
           color: 'var(--vscode-descriptionForeground)',
           fontSize: '16px'
         }}>
           📄 No tables found in DBML
         </div>
-        <div style={{ 
+        <div style={{
           color: 'var(--vscode-descriptionForeground)',
           fontSize: '12px',
           textAlign: 'center'
@@ -268,8 +300,8 @@ const DBMLPreview = ({ initialContent }) => {
         <Controls />
         <Background />
         <Panel position="top-right">
-          <div style={{ 
-            background: 'var(--vscode-editor-background)', 
+          <div style={{
+            background: 'var(--vscode-editor-background)',
             color: 'var(--vscode-editor-foreground)',
             padding: '8px',
             borderRadius: '4px',
@@ -284,6 +316,9 @@ const DBMLPreview = ({ initialContent }) => {
             </div>
             <div style={{ fontSize: '12px' }}>
               {dbmlData.schemas?.[0]?.refs?.length || 0} relationships
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--vscode-descriptionForeground)' }}>
+              Click edges for details
             </div>
             <button
               onClick={() => {
@@ -305,6 +340,14 @@ const DBMLPreview = ({ initialContent }) => {
           </div>
         </Panel>
       </ReactFlow>
+
+      {tooltipData && (
+        <EdgeTooltip
+          edge={tooltipData.edge}
+          position={tooltipData.position}
+          onClose={handleCloseTooltip}
+        />
+      )}
     </div>
   );
 };

@@ -236,23 +236,23 @@ export const transformDBMLToNodes = (dbmlData) => {
             sourceHandle: 'source',
             targetHandle: 'target',
             type: 'smoothstep',
-            animated: true,
+            animated: false,
             selectable: true,
             style: {
               stroke: 'var(--vscode-charts-lines)',
               strokeWidth: 2,
               strokeDasharray: '0',
             },
-            label: cardinality,
-            labelStyle: {
-              fill: 'var(--vscode-editor-foreground)',
-              fontSize: 10,
-              fontWeight: 'bold',
-            },
-            labelBgStyle: {
-              fill: 'var(--vscode-editor-background)',
-              fillOpacity: 0.8,
-            },
+            data: {
+              sourceTable,
+              sourceColumn: sourceField,
+              targetTable,
+              targetColumn: targetField,
+              sourceRelation,
+              targetRelation,
+              cardinality,
+              fullRelationshipText: `${sourceTable}.${sourceField} → ${targetTable}.${targetField}`
+            }
           });
         }
       });

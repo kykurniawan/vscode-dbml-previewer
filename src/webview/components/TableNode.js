@@ -113,22 +113,6 @@ const TableNode = ({ data }) => {
                   }}
                 />
               )}
-              
-              {/* {handleInfo && handleInfo.isTarget && (
-                <Handle
-                  type="target"
-                  position={Position.Left}
-                  id={`${column.name}`}
-                  style={{
-                    left: '-4px',
-                    background: 'var(--vscode-charts-lines)',
-                    border: '2px solid var(--vscode-editor-background)',
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%'
-                  }}
-                />
-              )} */}
             </div>
           );
         })}

@@ -1,0 +1,32 @@
+Table users {
+  id integer [primary key]
+  username varchar
+  email varchar [unique]
+  created_at timestamp
+  role_id integer
+}
+
+Table roles {
+  id integer [primary key]
+  name varchar
+  description text
+}
+
+Table posts {
+  id integer [primary key]
+  title varchar
+  content text
+  author_id integer
+  category_id integer
+  created_at timestamp
+}
+
+Table categories {
+  id integer [primary key]
+  name varchar
+  description text
+}
+
+Ref: users.role_id > roles.id // many-to-one
+Ref: posts.author_id > users.id // many-to-one  
+Ref: posts.category_id > categories.id // many-to-one
