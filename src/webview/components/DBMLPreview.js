@@ -253,8 +253,14 @@ const DBMLPreview = ({ initialContent }) => {
     );
   }
 
+  // Calculate total tables and refs across all schemas
+  const totalTables = dbmlData?.schemas?.reduce((total, schema) => 
+    total + (schema.tables?.length || 0), 0) || 0;
+  const totalRefs = dbmlData?.schemas?.reduce((total, schema) => 
+    total + (schema.refs?.length || 0), 0) || 0;
+
   // Show empty state
-  if (!dbmlData || !dbmlData.schemas?.[0]?.tables?.length) {
+  if (!dbmlData || !dbmlData.schemas?.length || totalTables === 0) {
     return (
       <div style={{
         width: '100vw',
@@ -312,10 +318,13 @@ const DBMLPreview = ({ initialContent }) => {
           }}>
             <strong>✅ DBML Preview</strong>
             <div style={{ fontSize: '12px' }}>
-              {dbmlData.schemas?.[0]?.tables?.length || 0} tables
+              {totalTables} tables
             </div>
             <div style={{ fontSize: '12px' }}>
-              {dbmlData.schemas?.[0]?.refs?.length || 0} relationships
+              {totalRefs} relationships
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--vscode-descriptionForeground)' }}>
+              {dbmlData.schemas?.length || 0} schema{(dbmlData.schemas?.length || 0) !== 1 ? 's' : ''}
             </div>
             <div style={{ fontSize: '10px', color: 'var(--vscode-descriptionForeground)' }}>
               Click edges for details

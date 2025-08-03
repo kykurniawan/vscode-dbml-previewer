@@ -1,14 +1,18 @@
 import React from 'react';
 
 const TableHeaderNode = ({ data }) => {
-  const { table, columnCount = 0, tableWidth = 200 } = data;
-  
+  const { table, columnCount = 0, tableWidth = 200, hasMultipleSchema = false } = data;
+
   // Calculate dimensions based on content
   const headerHeight = 42; // Header section height
   const noteHeight = table.note ? 30 : 0; // Note section height if present
   const columnHeight = 30; // Height per column
   const tablePadding = 8; // Padding around column area
   const totalHeight = headerHeight + noteHeight + (columnCount * columnHeight) + (tablePadding * 2);
+  let title = table.name;
+  if (hasMultipleSchema && table.schemaName) {
+    title = `${table.schemaName}.${table.name}`;
+  }
 
   return (
     <div style={{
@@ -34,7 +38,7 @@ const TableHeaderNode = ({ data }) => {
         display: 'flex',
         alignItems: 'center'
       }}>
-        📋 {table.name}
+        📋 {title}
       </div>
 
       {/* Table Note (if exists) */}
@@ -54,7 +58,7 @@ const TableHeaderNode = ({ data }) => {
           {table.note}
         </div>
       )}
-      
+
       {/* Column Area - Visual padding container */}
       {columnCount > 0 && (
         <div style={{

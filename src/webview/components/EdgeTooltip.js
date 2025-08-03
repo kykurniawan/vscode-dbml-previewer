@@ -29,30 +29,32 @@ const EdgeTooltip = ({ edge, position, onClose }) => {
     return null;
   }
 
-  const getDirectionSymbol = (sourceRelation, targetRelation) => {
-    if (sourceRelation === '1' && targetRelation === '*') {
-      return '<'; // one-to-many
-    } else if (sourceRelation === '*' && targetRelation === '1') {
-      return '>'; // many-to-one
-    } else if (sourceRelation === '1' && targetRelation === '1') {
-      return '—'; // one-to-one
-    } else if (sourceRelation === '*' && targetRelation === '*') {
-      return '<>'; // many-to-many
+  const getRelationType = (relation) => {
+    if (relation === '1') {
+      return 'one';
     }
-    return '—'; // fallback for other cases
-  };
+
+    if (relation === '*') {
+      return 'many';
+    }
+
+    return 'unknown';
+  }
 
   const formatRelationshipText = () => {
     const { sourceTable, sourceColumn, targetTable, targetColumn, sourceRelation, targetRelation } = edge.data || {};
 
     if (!sourceTable || !sourceColumn || !targetTable || !targetColumn) {
-      return `${edge.source} → ${edge.target}`;
+      return {
+        source: edge.source,
+        target: edge.target
+      }
     }
 
-    const directionSymbol = getDirectionSymbol(sourceRelation, targetRelation);
-    const cardinalityText = `${sourceRelation || '1'}:${targetRelation || '1'}`;
-
-    return `${sourceTable}.${sourceColumn} ${directionSymbol} ${targetTable}.${targetColumn}`;
+    return {
+      source: `${sourceTable}.${sourceColumn} = ${getRelationType(sourceRelation)}`,
+      target: `${targetTable}.${targetColumn} = ${getRelationType(targetRelation)}`
+    }
   };
 
   const relationshipInfo = formatRelationshipText();
@@ -126,7 +128,8 @@ const EdgeTooltip = ({ edge, position, onClose }) => {
 
       <div style={headerStyle}>Relationship</div>
       <div style={relationshipStyle}>
-        {relationshipInfo}
+        <div>{relationshipInfo.source}</div>
+        <div>{relationshipInfo.target}</div>
       </div>
     </div>
   );

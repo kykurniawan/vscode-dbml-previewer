@@ -11,24 +11,24 @@ const calculateColumnWidth = (column) => {
   const iconWidth = 12;
   const linkIconWidth = 12;
   const marginBetweenElements = 6;
-  
+
   // Calculate column name width (approximate)
   const columnNameLength = column.name.length;
   const columnNameWidth = columnNameLength * 7; // Approximate 7px per character
-  
+
   // Calculate type width
   const columnType = column.type?.type_name || 'unknown';
   const typeWidth = columnType.length * 6; // Monospace font, smaller
-  
+
   // Total width calculation
   let totalWidth = basePadding + iconWidth + marginBetweenElements + columnNameWidth + marginBetweenElements + typeWidth;
-  
+
   // Add extra width for link icon if this column has handles
   totalWidth += linkIconWidth + marginBetweenElements;
-  
+
   // Minimum width
   const minWidth = 160;
-  
+
   return Math.max(totalWidth, minWidth);
 };
 
@@ -41,16 +41,42 @@ const calculateTableWidth = (table) => {
   if (!table.fields || table.fields.length === 0) {
     return 200; // Default minimum width
   }
-  
+
   // Find the widest column
   const maxColumnWidth = Math.max(...table.fields.map(calculateColumnWidth));
-  
+
   // Add padding for parent container (8px padding on each side + borders)
   const tablePadding = 8;
   return maxColumnWidth + (tablePadding * 2);
 };
 
 
+
+/**
+ * Resolve table name to full name with schema prefix
+ * @param {string} tableName - Table name (may or may not include schema)
+ * @param {Array} tables - Array of table objects with fullName property
+ * @returns {string} Full table name with schema
+ */
+const resolveFullTableName = (tableName, tables) => {
+  // If tableName already contains a dot, it might already be schema.table
+  if (tableName.includes('.')) {
+    // Check if this matches any of our full table names
+    const matchingTable = tables.find(table => table.fullName === tableName);
+    if (matchingTable) {
+      return tableName;
+    }
+  }
+
+  // Look for a table with this name (without schema prefix)
+  const matchingTable = tables.find(table => table.name === tableName);
+  if (matchingTable) {
+    return matchingTable.fullName;
+  }
+
+  // If no match found, assume it's in public schema
+  return tableName;
+};
 
 const mapSourceAndTarget = (ref) => {
   let source;
@@ -82,10 +108,10 @@ const mapSourceAndTarget = (ref) => {
 /**
  * Analyze column relationships from DBML refs
  * @param {Array} refs - Array of reference objects with proper fieldNames
- * @param {Array} table - Array of table objects
+ * @param {Array} tables - Array of table objects with schema info
  * @returns {Object} Object mapping table names to column handle info
  */
-const analyzeColumnRelationships = (refs) => {
+const analyzeColumnRelationships = (refs, tables) => {
   const columnHandles = {};
 
   console.log('dbg: refs count:', refs.length);
@@ -93,19 +119,20 @@ const analyzeColumnRelationships = (refs) => {
   refs.forEach(ref => {
     // Use mapSourceAndTarget to properly determine source and target
     const [sourceEndpoint, targetEndpoint] = mapSourceAndTarget(ref);
-    
-    // Handle source endpoint
+
+    // Handle source endpoint - resolve full table name with schema
     if (sourceEndpoint?.tableName) {
       const tableName = sourceEndpoint.tableName;
+      const fullTableName = resolveFullTableName(tableName, tables);
       const fieldNames = sourceEndpoint.fieldNames || [sourceEndpoint.fieldName];
-      
-      if (!columnHandles[tableName]) {
-        columnHandles[tableName] = {};
+
+      if (!columnHandles[fullTableName]) {
+        columnHandles[fullTableName] = {};
       }
-      
+
       fieldNames.forEach(fieldName => {
         if (fieldName) {
-          columnHandles[tableName][fieldName] = {
+          columnHandles[fullTableName][fieldName] = {
             isSource: true,
             isTarget: false,
             relation: sourceEndpoint.relation
@@ -113,19 +140,20 @@ const analyzeColumnRelationships = (refs) => {
         }
       });
     }
-    
-    // Handle target endpoint
+
+    // Handle target endpoint - resolve full table name with schema
     if (targetEndpoint?.tableName) {
       const tableName = targetEndpoint.tableName;
+      const fullTableName = resolveFullTableName(tableName, tables);
       const fieldNames = targetEndpoint.fieldNames || [targetEndpoint.fieldName];
-      
-      if (!columnHandles[tableName]) {
-        columnHandles[tableName] = {};
+
+      if (!columnHandles[fullTableName]) {
+        columnHandles[fullTableName] = {};
       }
-      
+
       fieldNames.forEach(fieldName => {
         if (fieldName) {
-          columnHandles[tableName][fieldName] = {
+          columnHandles[fullTableName][fieldName] = {
             isSource: false,
             isTarget: true,
             relation: targetEndpoint.relation
@@ -134,37 +162,67 @@ const analyzeColumnRelationships = (refs) => {
       });
     }
   });
-  
+
   return columnHandles;
 };
 
 export const transformDBMLToNodes = (dbmlData) => {
-  if (!dbmlData?.schemas?.[0]?.tables) {
+  if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
 
-  const tables = dbmlData.schemas[0].tables;
-  const refs = dbmlData.schemas[0].refs || [];
-  
+  // Collect tables and refs from all schemas
+  const allTables = [];
+  const allRefs = [];
+  const hasMultipleSchema = dbmlData.schemas.length > 1;
+
+  dbmlData.schemas.forEach(schema => {
+    if (schema.tables) {
+      if (hasMultipleSchema) {
+        // Add schema name to each table for identification
+        const tablesWithSchema = schema.tables.map(table => ({
+          ...table,
+          schemaName: schema.name || 'public',
+          fullName: schema.name ? `${schema.name}.${table.name}` : table.name
+        }));
+        allTables.push(...tablesWithSchema);
+      } else {
+        const tablesWithoutSchema = schema.tables.map(table => ({
+          ...table,
+          fullName: table.name
+        }));
+        allTables.push(...tablesWithoutSchema);
+      }
+    }
+
+    if (schema.refs) {
+      allRefs.push(...schema.refs);
+    }
+  });
+
+  const tables = allTables;
+  const refs = allRefs;
+
   // Analyze column relationships from DBML refs only
-  const columnHandles = analyzeColumnRelationships(refs);
+  const columnHandles = analyzeColumnRelationships(refs, tables);
 
   // Create parent-child node structure
   const nodes = [];
-  
+
   tables.forEach((table) => {
     const columnCount = table.fields?.length || 0;
     const tableWidth = calculateTableWidth(table);
-    
-    // Create table header node (parent)
+
+    // Create table header node (parent) with schema-aware ID
     const tableHeaderNode = {
-      id: `table-${table.name}`,
+      id: `table-${table.fullName}`,
       type: 'tableHeader',
       position: { x: 0, y: 0 }, // Will be calculated by layout
-      data: { 
+      data: {
         table,
         columnCount,
-        tableWidth
+        tableWidth,
+        hasMultipleSchema,
       },
     };
     nodes.push(tableHeaderNode);
@@ -175,17 +233,17 @@ export const transformDBMLToNodes = (dbmlData) => {
     const tablePadding = 8;
     const startY = headerHeight + noteHeight + tablePadding; // Include padding offset
     const columnWidth = tableWidth - (tablePadding * 2); // Subtract both side paddings
-    
+
     table.fields?.forEach((column, columnIndex) => {
-      const columnHandleInfo = columnHandles[table.name]?.[column.name];
+      const columnHandleInfo = columnHandles[table.fullName]?.[column.name];
       const columnNode = {
-        id: `${table.name}.${column.name}`,
+        id: `${table.fullName}.${column.name}`,
         type: 'column',
-        position: { 
+        position: {
           x: tablePadding, // Position within padding
           y: startY + (columnIndex * 30) // Position after header, note, and padding
         },
-        parentId: `table-${table.name}`,
+        parentId: `table-${table.fullName}`,
         data: {
           column,
           hasSourceHandle: columnHandleInfo?.isSource || false,
@@ -201,28 +259,28 @@ export const transformDBMLToNodes = (dbmlData) => {
 
   // Create edges for relationships connecting column nodes directly from DBML refs
   const edges = [];
-  
+
   refs.forEach((ref, index) => {
     if (ref.endpoints && ref.endpoints.length >= 2) {
       const [sourceEndpoint, targetEndpoint] = mapSourceAndTarget(ref)
-      
+
       // Use fieldNames arrays from actual DBML refs
       const sourceFieldNames = sourceEndpoint.fieldNames || [];
       const targetFieldNames = targetEndpoint.fieldNames || [];
-      
+
       // Create edges for each field pair
       sourceFieldNames.forEach((sourceField, fieldIndex) => {
         const targetField = targetFieldNames[fieldIndex] || targetFieldNames[0];
 
         if (sourceField && targetField) {
-          const sourceTable = sourceEndpoint.tableName;
-          const targetTable = targetEndpoint.tableName;
-          
+          const sourceTable = resolveFullTableName(sourceEndpoint.tableName, tables);
+          const targetTable = resolveFullTableName(targetEndpoint.tableName, tables);
+
           // Generate cardinality label using actual endpoint relations
           const sourceRelation = sourceEndpoint.relation || '1';
           const targetRelation = targetEndpoint.relation || '1';
           const cardinality = `${sourceRelation}:${targetRelation}`;
-          
+
           console.log(`dbg: ------`);
           console.log(`dbg: source ${sourceTable}.${sourceField} -> ${sourceRelation}`);
           console.log(`dbg: target ${targetTable}.${targetField} -> ${targetRelation}`);
@@ -276,7 +334,7 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   const headerHeight = 42;
   const columnHeight = 30;
 
-  dagreGraph.setGraph({ 
+  dagreGraph.setGraph({
     rankdir: direction,
     nodesep: 50,
     ranksep: 100,
@@ -292,7 +350,7 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
     const { table, columnCount, tableWidth } = tableNode.data;
     const noteHeight = table.note ? 30 : 0;
     const totalHeight = headerHeight + noteHeight + (columnCount * columnHeight) + (tablePadding * 2);
-    
+
     tableDimensions[tableNode.id] = {
       width: tableWidth,
       height: totalHeight
@@ -301,17 +359,29 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
 
   tableHeaderNodes.forEach((node) => {
     const dimensions = tableDimensions[node.id];
-    dagreGraph.setNode(node.id, { 
-      width: dimensions.width, 
-      height: dimensions.height 
+    dagreGraph.setNode(node.id, {
+      width: dimensions.width,
+      height: dimensions.height
     });
   });
 
   // Add edges between table headers for dagre layout
   edges.forEach((edge) => {
-    const sourceTableId = `table-${edge.source.split('.')[0]}`;
-    const targetTableId = `table-${edge.target.split('.')[0]}`;
-    
+    // Extract table name from column ID (schema.table.column -> schema.table)
+    const sourceTableParts = edge.source.split('.');
+    const targetTableParts = edge.target.split('.');
+
+    // Handle both schema.table.column and table.column formats
+    const sourceTableName = sourceTableParts.length > 2
+      ? sourceTableParts.slice(0, -1).join('.')
+      : sourceTableParts[0];
+    const targetTableName = targetTableParts.length > 2
+      ? targetTableParts.slice(0, -1).join('.')
+      : targetTableParts[0];
+
+    const sourceTableId = `table-${sourceTableName}`;
+    const targetTableId = `table-${targetTableName}`;
+
     // Only add edge if it connects different tables
     if (sourceTableId !== targetTableId) {
       dagreGraph.setEdge(sourceTableId, targetTableId);
