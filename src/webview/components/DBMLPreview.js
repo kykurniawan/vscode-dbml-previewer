@@ -11,10 +11,14 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Parser } from '@dbml/core';
 import TableNode from './TableNode';
+import TableHeaderNode from './TableHeaderNode';
+import ColumnNode from './ColumnNode';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 
 const nodeTypes = {
   table: TableNode,
+  tableHeader: TableHeaderNode,
+  column: ColumnNode,
 };
 
 const DBMLPreview = ({ initialContent }) => {
