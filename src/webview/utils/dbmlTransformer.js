@@ -237,16 +237,11 @@ export const transformDBMLToNodes = (dbmlData) => {
             targetHandle: 'target',
             type: 'smoothstep',
             animated: true,
+            selectable: true,
             style: {
               stroke: 'var(--vscode-charts-lines)',
               strokeWidth: 2,
               strokeDasharray: '0',
-            },
-            markerEnd: {
-              type: 'arrowclosed',
-              color: 'var(--vscode-charts-lines)',
-              width: 20,
-              height: 20,
             },
             label: '1:M', // Default relationship type
             labelStyle: {
@@ -288,16 +283,11 @@ export const transformDBMLToNodes = (dbmlData) => {
           targetHandle: 'target',
           type: 'smoothstep',
           animated: true,
+          selectable: true,
           style: {
             stroke: 'var(--vscode-charts-lines)',
             strokeWidth: 2,
             strokeDasharray: '0',
-          },
-          markerEnd: {
-            type: 'arrowclosed',
-            color: 'var(--vscode-charts-lines)',
-            width: 20,
-            height: 20,
           },
           label: getRelationshipLabel(ref),
           labelStyle: {

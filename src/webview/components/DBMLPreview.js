@@ -30,12 +30,26 @@ const DBMLPreview = ({ initialContent }) => {
   const [dbmlContent, setDbmlContent] = useState(initialContent || '');
   const [parseError, setParseError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedEdgeIds, setSelectedEdgeIds] = useState(new Set());
 
   console.log('🔄 State initialized - nodes:', nodes.length, 'edges:', edges.length);
 
   // Disabled manual connections for preview-only mode
   const onConnect = useCallback(() => {
     // No-op: Manual connections disabled in preview mode
+  }, []);
+
+  // Handle edge click for selection toggle
+  const onEdgeClick = useCallback((event, edge) => {
+    setSelectedEdgeIds(prevSelected => {
+      const newSelected = new Set(prevSelected);
+      if (newSelected.has(edge.id)) {
+        newSelected.delete(edge.id);
+      } else {
+        newSelected.add(edge.id);
+      }
+      return newSelected;
+    });
   }, []);
 
   // Parse DBML content
@@ -109,6 +123,38 @@ const DBMLPreview = ({ initialContent }) => {
       }
     }
   }, [dbmlData, setNodes, setEdges]);
+
+  // Update edge styles based on selection state
+  useEffect(() => {
+    if (edges.length > 0) {
+      const updatedEdges = edges.map(edge => {
+        const isSelected = selectedEdgeIds.has(edge.id);
+        const currentStroke = edge.style?.stroke;
+        const currentStrokeWidth = edge.style?.strokeWidth;
+        const expectedStroke = isSelected ? 'var(--vscode-button-background)' : 'var(--vscode-charts-lines)';
+        const expectedStrokeWidth = isSelected ? 3 : 2;
+        
+        // Only update if the style has actually changed
+        if (currentStroke !== expectedStroke || currentStrokeWidth !== expectedStrokeWidth) {
+          return {
+            ...edge,
+            style: {
+              ...edge.style,
+              stroke: expectedStroke,
+              strokeWidth: expectedStrokeWidth,
+            }
+          };
+        }
+        return edge;
+      });
+      
+      // Only set edges if there are actual changes
+      const hasChanges = updatedEdges.some((edge, index) => edge !== edges[index]);
+      if (hasChanges) {
+        setEdges(updatedEdges);
+      }
+    }
+  }, [selectedEdgeIds, edges, setEdges]);
 
   // Show error state
   if (parseError) {
@@ -212,6 +258,7 @@ const DBMLPreview = ({ initialContent }) => {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onEdgeClick={onEdgeClick}
         nodeTypes={nodeTypes}
         fitView
         attributionPosition="bottom-left"
