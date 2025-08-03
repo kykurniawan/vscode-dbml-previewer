@@ -1,0 +1,109 @@
+{
+  "name": "dbml-previewer",
+  "displayName": "DBML Previewer",
+  "description": "Preview DBML files with syntax highlighting",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "license" : "MIT",
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "dbml-previewer.preview",
+        "title": "Preview DBML",
+        "category": "DBML Previewer",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "dbml-previewer.previewFromExplorer",
+        "title": "Preview DBML",
+        "category": "DBML Previewer"
+      },
+      {
+        "command": "dbml-previewer.helloWorld",
+        "title": "Hello World",
+        "category": "DBML Previewer"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "dbml-previewer.previewFromExplorer",
+          "when": "resourceExtname == .dbml",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "dbml-previewer.preview",
+          "when": "resourceExtname == .dbml",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "dbml-previewer.preview",
+          "when": "resourceExtname == .dbml"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "dbml-previewer.preview",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "resourceExtname == .dbml && editorTextFocus"
+      }
+    ],
+    "languages": [
+      {
+        "id": "dbml",
+        "aliases": [
+          "DBML",
+          "dbml"
+        ],
+        "extensions": [
+          ".dbml"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "yarn run lint",
+    "test": "vscode-test",
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --watch"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@xyflow/react": "^12.0.0",
+    "dagre": "^0.8.5",
+    "@dbml/core": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.102.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "^9.25.1",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.0",
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0",
+    "@babel/preset-react": "^7.22.0",
+    "babel-loader": "^9.1.0",
+    "css-loader": "^6.8.0",
+    "style-loader": "^3.3.0"
+  }
+}

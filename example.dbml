@@ -1,0 +1,73 @@
+Project sample_project {
+  database_type: 'PostgreSQL'
+  Note: '''
+    # Sample DBML Project
+    This is a sample DBML file for testing the VS Code extension.
+  '''
+}
+
+Table users {
+  id integer [primary key, increment]
+  username varchar(50) [not null, unique]
+  email varchar(100) [not null, unique]
+  password_hash varchar(255) [not null]
+  first_name varchar(50)
+  last_name varchar(50)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  is_active boolean [default: true]
+  
+  Note: 'User accounts table'
+}
+
+Table posts {
+  id integer [primary key, increment]
+  title varchar(200) [not null]
+  content text
+  author_id integer [not null, ref: > users.id]
+  category_id integer [ref: > categories.id]
+  status varchar(20) [default: 'draft']
+  published_at timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  
+  Note: 'Blog posts table'
+}
+
+Table categories {
+  id integer [primary key, increment]
+  name varchar(100) [not null, unique]
+  description text
+  parent_id integer [ref: > categories.id]
+  created_at timestamp [default: `now()`]
+  
+  Note: 'Post categories with hierarchical support'
+}
+
+Table tags {
+  id integer [primary key, increment]
+  name varchar(50) [not null, unique]
+  color varchar(7) [default: '#000000']
+  created_at timestamp [default: `now()`]
+}
+
+Table post_tags {
+  post_id integer [ref: > posts.id]
+  tag_id integer [ref: > tags.id]
+  created_at timestamp [default: `now()`]
+  
+  indexes {
+    (post_id, tag_id) [pk]
+  }
+}
+
+Table comments {
+  id integer [primary key, increment]
+  post_id integer [not null, ref: > posts.id]
+  author_id integer [ref: > users.id]
+  parent_id integer [ref: > comments.id]
+  content text [not null]
+  is_approved boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
