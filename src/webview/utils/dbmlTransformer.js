@@ -1,5 +1,51 @@
 import dagre from 'dagre';
 
+/**
+ * Analyze table relationships to determine which columns need handles
+ * @param {Array} tables - Array of table objects
+ * @param {Array} refs - Array of reference objects
+ * @returns {Object} Object mapping table names to column handle info
+ */
+const analyzeColumnRelationships = (tables, refs) => {
+  const columnHandles = {};
+  
+  // Initialize empty objects for each table
+  tables.forEach(table => {
+    columnHandles[table.name] = {};
+  });
+  
+  // Process each reference to determine source and target handles
+  refs.forEach(ref => {
+    const sourceEndpoint = ref.endpoints[0];
+    const targetEndpoint = ref.endpoints[1];
+    
+    const sourceTable = sourceEndpoint.tableName;
+    const targetTable = targetEndpoint.tableName;
+    const sourceColumn = sourceEndpoint.fieldName;
+    const targetColumn = targetEndpoint.fieldName;
+    
+    // Mark source column as needing a source handle
+    if (!columnHandles[sourceTable]) {
+      columnHandles[sourceTable] = {};
+    }
+    if (!columnHandles[sourceTable][sourceColumn]) {
+      columnHandles[sourceTable][sourceColumn] = { isSource: false, isTarget: false };
+    }
+    columnHandles[sourceTable][sourceColumn].isSource = true;
+    
+    // Mark target column as needing a target handle
+    if (!columnHandles[targetTable]) {
+      columnHandles[targetTable] = {};
+    }
+    if (!columnHandles[targetTable][targetColumn]) {
+      columnHandles[targetTable][targetColumn] = { isSource: false, isTarget: false };
+    }
+    columnHandles[targetTable][targetColumn].isTarget = true;
+  });
+  
+  return columnHandles;
+};
+
 export const transformDBMLToNodes = (dbmlData) => {
   if (!dbmlData?.schemas?.[0]?.tables) {
     return { nodes: [], edges: [] };
@@ -8,23 +54,36 @@ export const transformDBMLToNodes = (dbmlData) => {
   const tables = dbmlData.schemas[0].tables;
   const refs = dbmlData.schemas[0].refs || [];
 
+  // Analyze column relationships to determine which columns need handles
+  const columnHandles = analyzeColumnRelationships(tables, refs);
+
   // Create nodes for tables
   const nodes = tables.map((table, index) => ({
     id: table.name,
     type: 'table',
     position: { x: 0, y: 0 }, // Will be calculated by layout
-    data: { table },
+    data: { 
+      table,
+      columnHandles: columnHandles[table.name] || {}
+    },
   }));
 
-  // Create edges for relationships
+  // Create edges for relationships with column-specific handles
   const edges = refs.map((ref, index) => {
-    const sourceTable = ref.endpoints[0].tableName;
-    const targetTable = ref.endpoints[1].tableName;
+    const sourceEndpoint = ref.endpoints[0];
+    const targetEndpoint = ref.endpoints[1];
+    
+    const sourceTable = sourceEndpoint.tableName;
+    const targetTable = targetEndpoint.tableName;
+    const sourceColumn = sourceEndpoint.fieldName;
+    const targetColumn = targetEndpoint.fieldName;
     
     return {
-      id: `${sourceTable}-${targetTable}-${index}`,
+      id: `${sourceTable}.${sourceColumn}-${targetTable}.${targetColumn}-${index}`,
       source: sourceTable,
       target: targetTable,
+      sourceHandle: `${sourceTable}.${sourceColumn}`,
+      targetHandle: `${targetTable}.${targetColumn}`,
       type: 'smoothstep',
       animated: true,
       style: {

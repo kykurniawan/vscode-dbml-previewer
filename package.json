@@ -45,6 +45,13 @@
           "group": "navigation"
         }
       ],
+      "editor/context": [
+        {
+          "command": "dbml-previewer.preview",
+          "when": "resourceExtname == .dbml",
+          "group": "navigation"
+        }
+      ],
       "commandPalette": [
         {
           "command": "dbml-previewer.preview",

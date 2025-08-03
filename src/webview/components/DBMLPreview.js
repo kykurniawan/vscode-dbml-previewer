@@ -27,10 +27,10 @@ const DBMLPreview = ({ initialContent }) => {
   const [parseError, setParseError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
+  // Disabled manual connections for preview-only mode
+  const onConnect = useCallback(() => {
+    // No-op: Manual connections are disabled in preview mode
+  }, []);
 
   // Parse DBML content
   const parseDBML = useCallback(async (content) => {
@@ -201,6 +201,15 @@ const DBMLPreview = ({ initialContent }) => {
         nodeTypes={nodeTypes}
         fitView
         attributionPosition="bottom-left"
+        connectionMode="loose"
+        elementsSelectable={true}
+        nodesConnectable={false}
+        nodesDraggable={true}
+        panOnDrag={true}
+        panOnScroll={true}
+        zoomOnScroll={true}
+        zoomOnPinch={true}
+        zoomOnDoubleClick={false}
       >
         <Controls />
         <Background />
