@@ -171,9 +171,10 @@ export const transformDBMLToNodes = (dbmlData) => {
     return { nodes: [], edges: [] };
   }
 
-  // Collect tables and refs from all schemas
+  // Collect tables, refs, and tableGroups from all schemas
   const allTables = [];
   const allRefs = [];
+  const allTableGroups = [];
   const hasMultipleSchema = dbmlData.schemas.length > 1;
 
   dbmlData.schemas.forEach(schema => {
@@ -198,10 +199,33 @@ export const transformDBMLToNodes = (dbmlData) => {
     if (schema.refs) {
       allRefs.push(...schema.refs);
     }
+
+    if (schema.tableGroups) {
+      // Add schema name to each tableGroup for identification
+      const tableGroupsWithSchema = schema.tableGroups.map(tableGroup => ({
+        ...tableGroup,
+        schemaName: schema.name || 'public',
+        fullName: hasMultipleSchema && schema.name ? `${schema.name}.${tableGroup.name}` : tableGroup.name
+      }));
+      allTableGroups.push(...tableGroupsWithSchema);
+    }
   });
 
   const tables = allTables;
   const refs = allRefs;
+  const tableGroups = allTableGroups;
+
+  // Create table-to-group mapping
+  const tableToGroupMap = {};
+  tableGroups.forEach(group => {
+    if (group.tables && Array.isArray(group.tables)) {
+      group.tables.forEach(tableName => {
+        // Handle both string table names and table objects
+        const tableNameStr = typeof tableName === 'string' ? tableName : tableName.name;
+        tableToGroupMap[tableNameStr] = group;
+      });
+    }
+  });
 
   // Analyze column relationships from DBML refs only
   const columnHandles = analyzeColumnRelationships(refs, tables);
@@ -212,6 +236,7 @@ export const transformDBMLToNodes = (dbmlData) => {
   tables.forEach((table) => {
     const columnCount = table.fields?.length || 0;
     const tableWidth = calculateTableWidth(table);
+    const tableGroup = tableToGroupMap[table.name];
 
     // Create table header node (parent) with schema-aware ID
     const tableHeaderNode = {
@@ -223,6 +248,7 @@ export const transformDBMLToNodes = (dbmlData) => {
         columnCount,
         tableWidth,
         hasMultipleSchema,
+        tableGroup,
       },
     };
     nodes.push(tableHeaderNode);
@@ -317,17 +343,20 @@ export const transformDBMLToNodes = (dbmlData) => {
     }
   });
 
-  // Apply auto-layout using dagre (only for table header nodes)
-  const layoutedElements = getLayoutedElements(nodes, edges);
+  // We'll add TableGroup nodes after layout calculation to position them correctly
+
+  // Apply auto-layout using dagre (for table header nodes and table groups)
+  const layoutedElements = getLayoutedElements(nodes, edges, tableGroups);
 
   return {
     nodes: layoutedElements.nodes,
     edges: layoutedElements.edges,
+    tableGroups: layoutedElements.tableGroups,
   };
 };
 
 
-const getLayoutedElements = (nodes, edges, direction = 'TB') => {
+const getLayoutedElements = (nodes, edges, tableGroups = [], direction = 'TB') => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
 
@@ -409,8 +438,70 @@ const getLayoutedElements = (nodes, edges, direction = 'TB') => {
     return node;
   });
 
+  // Calculate TableGroup positions and add them as background nodes
+  const tableGroupNodes = [];
+  if (tableGroups && tableGroups.length > 0) {
+    tableGroups.forEach((group) => {
+      // Find all table nodes belonging to this group
+      const groupTables = layoutedNodes.filter(node => 
+        node.type === 'tableHeader' && node.data?.tableGroup?.name === group.name
+      );
+
+      if (groupTables.length > 0) {
+        // Calculate bounding box for all tables in this group
+        const padding = 24;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+        groupTables.forEach(tableNode => {
+          const { x, y } = tableNode.position;
+          const tableWidth = tableNode.data.tableWidth || 200;
+          const tableHeight = 
+            42 + // header height
+            (tableNode.data.table?.note ? 30 : 0) + // note height
+            (tableNode.data.columnCount * 30) + // columns height
+            16; // padding
+
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + tableWidth);
+          maxY = Math.max(maxY, y + tableHeight);
+        });
+
+        // Create TableGroup background node
+        const tableGroupNode = {
+          id: `tablegroup-${group.fullName}`,
+          type: 'tableGroup',
+          position: { 
+            x: minX - padding, 
+            y: minY - padding 
+          },
+          data: {
+            tableGroup: group,
+            tables: groupTables.map(t => t.data.table)
+          },
+          style: {
+            width: (maxX - minX) + (padding * 2),
+            height: (maxY - minY) + (padding * 2),
+            backgroundColor: 'rgba(0, 122, 204, 0.1)',
+            border: '1px solid rgba(0, 122, 204, 0.3)',
+            borderRadius: '8px',
+            zIndex: -1,
+          },
+          selectable: true,
+          draggable: true,
+        };
+        
+        tableGroupNodes.push(tableGroupNode);
+      }
+    });
+  }
+
+  // Insert TableGroup nodes at the beginning so they appear behind tables
+  const finalNodes = [...tableGroupNodes, ...layoutedNodes];
+
   return {
-    nodes: layoutedNodes,
+    nodes: finalNodes,
     edges,
+    tableGroups,
   };
 };

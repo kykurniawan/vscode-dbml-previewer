@@ -13,6 +13,7 @@ import { Parser } from '@dbml/core';
 import TableNode from './TableNode';
 import TableHeaderNode from './TableHeaderNode';
 import ColumnNode from './ColumnNode';
+import TableGroupNode from './TableGroupNode';
 import EdgeTooltip from './EdgeTooltip';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 
@@ -20,6 +21,7 @@ const nodeTypes = {
   table: TableNode,
   tableHeader: TableHeaderNode,
   column: ColumnNode,
+  tableGroup: TableGroupNode,
 };
 
 const DBMLPreview = ({ initialContent }) => {
@@ -33,6 +35,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState(new Set());
   const [tooltipData, setTooltipData] = useState(null);
+  const [tableGroups, setTableGroups] = useState([]);
 
   console.log('🔄 State initialized - nodes:', nodes.length, 'edges:', edges.length);
 
@@ -75,6 +78,80 @@ const DBMLPreview = ({ initialContent }) => {
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
   }, []);
+
+  // Recalculate TableGroup bounds based on member table positions
+  const recalculateTableGroupBounds = useCallback((currentNodes, currentTableGroups) => {
+    if (!currentTableGroups || currentTableGroups.length === 0) {
+      return currentNodes;
+    }
+
+    const updatedNodes = [...currentNodes];
+    const padding = 24;
+
+    currentTableGroups.forEach((group) => {
+      // Find all table nodes belonging to this group
+      const groupTables = currentNodes.filter(node => 
+        node.type === 'tableHeader' && node.data?.tableGroup?.name === group.name
+      );
+
+      if (groupTables.length > 0) {
+        // Calculate bounding box for all tables in this group
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+        groupTables.forEach(tableNode => {
+          const { x, y } = tableNode.position;
+          const tableWidth = tableNode.data.tableWidth || 200;
+          const tableHeight = 
+            42 + // header height
+            (tableNode.data.table?.note ? 30 : 0) + // note height
+            (tableNode.data.columnCount * 30) + // columns height
+            16; // padding
+
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + tableWidth);
+          maxY = Math.max(maxY, y + tableHeight);
+        });
+
+        // Find the TableGroup node and update its position and size
+        const groupNodeIndex = updatedNodes.findIndex(node => 
+          node.id === `tablegroup-${group.fullName}`
+        );
+
+        if (groupNodeIndex !== -1) {
+          updatedNodes[groupNodeIndex] = {
+            ...updatedNodes[groupNodeIndex],
+            position: { 
+              x: minX - padding, 
+              y: minY - padding 
+            },
+            style: {
+              ...updatedNodes[groupNodeIndex].style,
+              width: (maxX - minX) + (padding * 2),
+              height: (maxY - minY) + (padding * 2),
+            }
+          };
+        }
+      }
+    });
+
+    return updatedNodes;
+  }, []);
+
+  // Custom nodes change handler that includes TableGroup bounds recalculation
+  const handleNodesChange = useCallback((changes) => {
+    // Apply the standard changes first
+    onNodesChange(changes);
+    
+    // Check if any table positions changed and recalculate group bounds
+    const hasPositionChanges = changes.some(change => 
+      change.type === 'position' && change.dragging === false
+    );
+
+    if (hasPositionChanges && tableGroups.length > 0) {
+      setNodes(currentNodes => recalculateTableGroupBounds(currentNodes, tableGroups));
+    }
+  }, [onNodesChange, tableGroups, recalculateTableGroupBounds, setNodes]);
 
   // Parse DBML content
   const parseDBML = useCallback(async (content) => {
@@ -136,12 +213,14 @@ const DBMLPreview = ({ initialContent }) => {
     console.log('🔄 Transform effect triggered, dbmlData:', dbmlData);
     if (dbmlData) {
       try {
-        const { nodes: newNodes, edges: newEdges } = transformDBMLToNodes(dbmlData);
-        console.log('✅ Transform successful - nodes:', newNodes.length, 'edges:', newEdges.length);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData);
+        console.log('✅ Transform successful - nodes:', newNodes.length, 'edges:', newEdges.length, 'tableGroups:', newTableGroups?.length || 0);
         console.log('📊 Generated nodes:', newNodes);
         console.log('🔗 Generated edges:', newEdges);
+        console.log('📦 TableGroups:', newTableGroups);
         setNodes(newNodes);
         setEdges(newEdges);
+        setTableGroups(newTableGroups || []);
       } catch (error) {
         console.error('❌ Error transforming DBML data:', error);
       }
@@ -293,7 +372,7 @@ const DBMLPreview = ({ initialContent }) => {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onEdgeClick={onEdgeClick}
