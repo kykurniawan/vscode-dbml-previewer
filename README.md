@@ -9,7 +9,7 @@
 
 Perfect for database architects, developers, and anyone working with database schemas. Turn text-based DBML into visual understanding with just one click.
 
-![DBML Previewer Demo](https://raw.githubusercontent.com/kykurniawan/vscode-dbml-previewer/main/assets/demo.mp4)
+![DBML Previewer Demo](https://raw.githubusercontent.com/kykurniawan/vscode-dbml-previewer/main/demo.mp4)
 
 ## 🌟 What's New
 
