@@ -63,8 +63,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rizkykurniawan.dbml-previewer-${{ steps.get_version.outputs.VERSION }}.vsix
-          asset_name: rizkykurniawan.dbml-previewer-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_path: ./dbml-previewer-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_name: dbml-previewer-${{ steps.get_version.outputs.VERSION }}.vsix
           asset_content_type: application/zip
           
       - name: Publish to VS Code Marketplace
