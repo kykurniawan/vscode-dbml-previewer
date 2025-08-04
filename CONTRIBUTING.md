@@ -6,7 +6,7 @@ Thank you for your interest in contributing to DBML Previewer! We welcome contri
 
 ### 🐛 Bug Reports
 Found a bug? Help us improve by reporting it:
-- Use the [issue tracker](https://github.com/openframebox/vscode-dbml-previewer/issues)
+- Use the [issue tracker](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
 - Include a clear description of the problem
 - Provide steps to reproduce the issue
 - Share the DBML file that causes the problem (if applicable)
@@ -14,14 +14,14 @@ Found a bug? Help us improve by reporting it:
 
 ### 💡 Feature Requests
 Have an idea for a new feature?
-- Check existing [issues](https://github.com/openframebox/vscode-dbml-previewer/issues) first
+- Check existing [issues](https://github.com/kykurniawan/vscode-dbml-previewer/issues) first
 - Open a new issue with the "enhancement" label
 - Describe the feature and why it would be useful
 - Include mockups or examples if possible
 
 ### 🔧 Code Contributions
 Ready to contribute code? Awesome!
-- Check the [good first issue](https://github.com/openframebox/vscode-dbml-previewer/labels/good%20first%20issue) label
+- Check the [good first issue](https://github.com/kykurniawan/vscode-dbml-previewer/labels/good%20first%20issue) label
 - Follow the development setup below
 - Read our coding guidelines
 - Submit a pull request
@@ -37,7 +37,7 @@ Help improve our documentation:
 
 ### Prerequisites
 - **Node.js**: Version 16 or higher
-- **npm** or **yarn**: Package manager
+- **npm**: Package manager
 - **VS Code**: Version 1.102.0 or higher
 - **Git**: For version control
 
@@ -52,20 +52,17 @@ Help improve our documentation:
 
 2. **Install Dependencies**
    ```bash
-   # Using yarn (recommended)
-   yarn install
-   
-   # Or using npm
+   # Install dependencies
    npm install
    ```
 
 3. **Build the Extension**
    ```bash
    # Build for development
-   yarn build
+   npm run build
    
    # Or build and watch for changes
-   yarn watch
+   npm run watch
    ```
 
 4. **Test the Extension**
@@ -76,10 +73,10 @@ Help improve our documentation:
 5. **Run Tests**
    ```bash
    # Run all tests
-   yarn test
+   npm test
    
    # Run linting
-   yarn lint
+   npm run lint
    ```
 
 ## 📝 Coding Guidelines
@@ -136,13 +133,13 @@ Help improve our documentation:
 ### Running Tests
 ```bash
 # Run all tests
-yarn test
+npm test
 
 # Run tests in watch mode
-yarn test --watch
+npm test -- --watch
 
 # Run specific test file
-yarn test test/extension.test.js
+npm test test/extension.test.js
 ```
 
 ### Writing Tests
@@ -183,8 +180,8 @@ describe('Feature Name', () => {
    - Update documentation if required
 
 3. **Before Submitting**
-   - Run tests: `yarn test`
-   - Run linting: `yarn lint`
+   - Run tests: `npm test`
+   - Run linting: `npm run lint`
    - Test the extension manually
    - Update CHANGELOG.md if needed
 
@@ -309,7 +306,7 @@ Examples of behavior that contributes to creating a positive environment:
 - Publishing others' private information without permission
 
 ### Enforcement
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at openframebox@gmail.com. All complaints will be reviewed and investigated and will result in a response that is deemed necessary and appropriate to the circumstances.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at contact.rizkykurniawan@gmail.com. All complaints will be reviewed and investigated and will result in a response that is deemed necessary and appropriate to the circumstances.
 
 ## 🏷️ Issue Labels
 
@@ -329,7 +326,7 @@ We use the following labels to organize issues:
 ### Community Support
 - 🐛 **Issues**: For bugs and feature requests
 - 💬 **Discussions**: For questions and general discussion
-- 📧 **Email**: openframebox@gmail.com for private matters
+- 📧 **Email**: contact.rizkykurniawan@gmail.com for private matters
 
 ### Development Help
 If you're stuck while contributing:

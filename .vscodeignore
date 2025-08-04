@@ -8,3 +8,13 @@ vsc-extension-quickstart.md
 **/*.map
 **/eslint.config.mjs
 **/.vscode-test.*
+node_modules/**
+src/**
+webpack.config.js
+yarn.lock
+package-lock.json
+*.vsix
+**/*.dbml
+agent/**
+.DS_Store
+.git/**

@@ -1,15 +1,40 @@
 {
   "name": "dbml-previewer",
   "displayName": "DBML Previewer",
-  "description": "Preview DBML files with syntax highlighting",
+  "description": "A powerful Visual Studio Code extension that transforms DBML files into interactive, visual database diagrams",
   "version": "0.0.1",
+  "publisher": "rizkykurniawan",
+  "author": {
+    "name": "Rizky Kurniawan",
+    "email": "contact.rizkykurniawan@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kykurniawan/vscode-dbml-previewer.git"
+  },
+  "homepage": "https://github.com/kykurniawan/vscode-dbml-previewer#readme",
+  "bugs": {
+    "url": "https://github.com/kykurniawan/vscode-dbml-previewer/issues"
+  },
+  "keywords": [
+    "dbml",
+    "database",
+    "diagram",
+    "preview",
+    "visualization",
+    "schema",
+    "erd",
+    "database design",
+    "sql"
+  ],
   "engines": {
     "vscode": "^1.102.0"
   },
   "categories": [
+    "Visualization",
     "Other"
   ],
-  "license" : "MIT",
+  "license": "MIT",
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -82,7 +107,7 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "pretest": "yarn run lint",
+    "pretest": "npm run lint",
     "test": "vscode-test",
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch"

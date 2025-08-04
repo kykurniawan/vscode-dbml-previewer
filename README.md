@@ -1,13 +1,13 @@
 # DBML Previewer
 
-[![VS Code Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-blue)](https://marketplace.visualstudio.com/items?itemName=openframebox.dbml-previewer)
+[![VS Code Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-blue)](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub issues](https://img.shields.io/github/issues/openframebox/vscode-dbml-previewer)](https://github.com/openframebox/vscode-dbml-previewer/issues)
-[![GitHub stars](https://img.shields.io/github/stars/openframebox/vscode-dbml-previewer)](https://github.com/openframebox/vscode-dbml-previewer/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/kykurniawan/vscode-dbml-previewer)](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
+[![GitHub stars](https://img.shields.io/github/stars/kykurniawan/vscode-dbml-previewer)](https://github.com/kykurniawan/vscode-dbml-previewer/stargazers)
 
 A powerful Visual Studio Code extension that transforms DBML (Database Markup Language) files into interactive, visual database diagrams. Perfect for database architects, developers, and anyone working with database schemas.
 
-![DBML Previewer Demo](https://raw.githubusercontent.com/openframebox/vscode-dbml-previewer/main/assets/demo.gif)
+![DBML Previewer Demo](https://raw.githubusercontent.com/kykurniawan/vscode-dbml-previewer/main/assets/demo.gif)
 
 ## ✨ Features
 
@@ -47,7 +47,7 @@ A powerful Visual Studio Code extension that transforms DBML (Database Markup La
 
 2. **From Command Line**:
    ```bash
-   code --install-extension openframebox.dbml-previewer
+   code --install-extension rizkykurniawan.dbml-previewer
    ```
 
 ### Usage
@@ -144,32 +144,32 @@ The extension works out of the box with sensible defaults. Future versions will 
 ## 🔧 Development
 
 ### Prerequisites
-- Node.js 22.16+ and npm/yarn
+- Node.js 22.16+ and npm
 - Visual Studio Code 1.102.0+
 
 ### Setup
 ```bash
 # Clone the repository
-git clone https://github.com/openframebox/vscode-dbml-previewer.git
+git clone https://github.com/kykurniawan/vscode-dbml-previewer.git
 cd vscode-dbml-previewer
 
 # Install dependencies
-yarn install
+npm install
 
 # Build the extension
-yarn build
+npm run build
 
 # Run in development mode
-yarn watch
+npm run watch
 ```
 
 ### Testing
 ```bash
 # Run linting
-yarn lint
+npm run lint
 
 # Run tests
-yarn test
+npm test
 ```
 
 ### Project Structure
@@ -208,7 +208,7 @@ We welcome contributions from the community! Please read our [Contributing Guide
 ### Reporting Issues
 If you encounter any problems:
 
-1. **Check existing issues** on [GitHub Issues](https://github.com/openframebox/vscode-dbml-previewer/issues)
+1. **Check existing issues** on [GitHub Issues](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
 2. **Create a new issue** with:
    - Clear description of the problem
    - Steps to reproduce
@@ -218,7 +218,7 @@ If you encounter any problems:
 ### Getting Help
 - 📖 Check our documentation and FAQ
 - 💬 Join discussions in GitHub Issues
-- 📧 Contact us at openframebox@gmail.com
+- 📧 Contact us at contact.rizkykurniawan@gmail.com
 
 ## 📋 Requirements
 
@@ -262,6 +262,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ by [Open Framebox](https://github.com/openframebox)**
+**Made with ❤️ by [Rizky Kurniawan](https://github.com/kykurniawan)**
 
 *Transform your database schemas from text to visual understanding*
