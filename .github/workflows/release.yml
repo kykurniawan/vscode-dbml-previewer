@@ -1,0 +1,76 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run linting
+        run: npm run lint
+        
+      - name: Build extension
+        run: npm run build
+        
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+        
+      - name: Package extension
+        run: npm run package
+        
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release v${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## Changes in v${{ steps.get_version.outputs.VERSION }}
+            
+            See the full changelog: [CHANGELOG.md](https://github.com/kykurniawan/vscode-dbml-previewer/blob/main/CHANGELOG.md#${{ steps.get_version.outputs.VERSION }})
+            
+            ### Installation
+            Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer) or download the `.vsix` file below and install manually.
+            
+            ```bash
+            code --install-extension rizkykurniawan.dbml-previewer-${{ steps.get_version.outputs.VERSION }}.vsix
+            ```
+          draft: false
+          prerelease: false
+          
+      - name: Upload VSIX to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./rizkykurniawan.dbml-previewer-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_name: rizkykurniawan.dbml-previewer-${{ steps.get_version.outputs.VERSION }}.vsix
+          asset_content_type: application/zip
+          
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npm run publish
