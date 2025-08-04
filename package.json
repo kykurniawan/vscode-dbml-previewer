@@ -1,7 +1,7 @@
 {
   "name": "dbml-previewer",
   "displayName": "DBML Previewer",
-  "description": "A powerful Visual Studio Code extension that transforms DBML files into interactive, visual database diagrams",
+  "description": "Transform DBML files into interactive visual database diagrams with drag-and-drop tables, relationship tooltips, multi-schema support, and real-time preview updates",
   "version": "0.0.1",
   "publisher": "rizkykurniawan",
   "author": {
@@ -25,7 +25,17 @@
     "schema",
     "erd",
     "database design",
-    "sql"
+    "sql",
+    "interactive",
+    "relationships",
+    "flow chart",
+    "entity relationship",
+    "database modeling",
+    "postgresql",
+    "mysql",
+    "database schema",
+    "table relationships",
+    "visual database"
   ],
   "engines": {
     "vscode": "^1.102.0"
@@ -35,7 +45,7 @@
     "Other"
   ],
   "license": "MIT",
-  "icon": "icon.svg",
+  "icon": "icon.png",
   "main": "./extension.js",
   "contributes": {
     "commands": [

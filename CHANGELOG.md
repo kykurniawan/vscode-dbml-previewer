@@ -29,7 +29,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   - Primary keys and foreign keys with visual indicators
   - Relationships (`>`, `<`, `-`) with proper cardinality display
   - Unique constraints and not null constraints
-  - Table notes and comments
+  - Table notes with interactive popup tooltips
   - Indexes (simple and composite)
   - Table groups for schema organization
   - Multi-schema database support
@@ -53,3 +53,5 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Minimap for large schemas
 - Schema comparison tools
 - Performance optimizations for very large databases
+- Column note tooltips enhancement
+- Bulk table operations
