@@ -35,6 +35,7 @@
     "Other"
   ],
   "license": "MIT",
+  "icon": "icon.svg",
   "main": "./extension.js",
   "contributes": {
     "commands": [
