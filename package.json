@@ -124,7 +124,7 @@
     "watch": "webpack --mode development --watch",
     "vscode:prepublish": "npm run build",
     "package": "vsce package --no-yarn",
-    "publish": "vsce publish"
+    "publish": "vsce publish --no-yarn"
   },
   "dependencies": {
     "react": "^18.2.0",
