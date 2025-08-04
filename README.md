@@ -14,12 +14,10 @@ A powerful Visual Studio Code extension that transforms DBML (Database Markup La
 ### 🎯 Interactive Database Diagrams
 - **Visual Schema Representation**: Transform text-based DBML into interactive flow diagrams
 - **Real-time Updates**: Automatically refresh preview when you save your DBML files
-- **Smart Auto-layout**: Intelligent table positioning using advanced graph algorithms
-- **Manual Positioning**: Drag tables to customize layout - positions are automatically saved per file
+- **Positioning**: Drag tables to customize layout - positions are automatically saved per file
 
 ### 🔗 Relationship Visualization
 - **Connection Lines**: Visual representation of foreign key relationships
-- **Cardinality Indicators**: Clear 1:1, 1:*, and *:* relationship labeling
 - **Interactive Edges**: Click on relationship lines to view detailed connection information
 - **Column-level Connections**: Precise source and target column identification
 
@@ -27,7 +25,6 @@ A powerful Visual Studio Code extension that transforms DBML (Database Markup La
 - **Multi-Schema Files**: Support for complex DBML files with multiple schemas
 - **Table Grouping**: Visual grouping of related tables with background containers
 - **Column Details**: Rich column information including types, constraints, and keys
-- **Schema Navigation**: Easy navigation through large database schemas
 
 ### 🎨 VS Code Integration
 - **Native Theme Support**: Automatically adapts to your VS Code theme (dark/light)

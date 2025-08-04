@@ -2,7 +2,7 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 
 const TableNode = ({ data }) => {
-  const { table, columnHandles = {} } = data;
+  const { table, columnHandles = {}, onTableNoteClick } = data;
 
   const getColumnIcon = (column) => {
     if (column.pk) return '🔑';
@@ -41,9 +41,39 @@ const TableNode = ({ data }) => {
         fontWeight: 'bold',
         fontSize: '14px',
         boxSizing: 'border-box',
-        borderBottom: '1px solid var(--vscode-panel-border)'
+        borderBottom: '1px solid var(--vscode-panel-border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
-        📋 {table.name}
+        <span>📋 {table.name}</span>
+        {table.note && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onTableNoteClick) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                onTableNoteClick(table, {
+                  x: rect.right + 10,
+                  y: rect.top
+                });
+              }
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--vscode-button-foreground)',
+              cursor: 'pointer',
+              fontSize: '12px',
+              padding: '2px 4px',
+              borderRadius: '2px',
+              opacity: 0.8
+            }}
+            title="View table note"
+          >
+            📝
+          </button>
+        )}
       </div>
 
       {/* Columns */}
@@ -120,19 +150,6 @@ const TableNode = ({ data }) => {
         })}
       </div>
 
-      {/* Table Note */}
-      {table.note && (
-        <div style={{
-          padding: '8px 12px',
-          fontSize: '9px',
-          color: 'var(--vscode-descriptionForeground)',
-          borderTop: '1px solid var(--vscode-panel-border)',
-          fontStyle: 'italic',
-          background: 'var(--vscode-editor-inactiveSelectionBackground)'
-        }}>
-          {table.note}
-        </div>
-      )}
 
       {/* Generic table handles for fallback connections */}
       <Handle

@@ -16,6 +16,7 @@ import ColumnNode from './ColumnNode';
 import TableGroupNode from './TableGroupNode';
 import EdgeTooltip from './EdgeTooltip';
 import ColumnTooltip from './ColumnTooltip';
+import TableNoteTooltip from './TableNoteTooltip';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 import { 
   saveLayout, 
@@ -44,6 +45,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [selectedEdgeIds, setSelectedEdgeIds] = useState(new Set());
   const [tooltipData, setTooltipData] = useState(null);
   const [columnTooltipData, setColumnTooltipData] = useState(null);
+  const [tableNoteTooltipData, setTableNoteTooltipData] = useState(null);
   const [tableGroups, setTableGroups] = useState([]);
   const [draggedGroupPositions, setDraggedGroupPositions] = useState(new Map());
   const [fileId, setFileId] = useState(null);
@@ -116,9 +118,10 @@ const DBMLPreview = ({ initialContent }) => {
   const handleColumnClick = useCallback((column, enumDef, position) => {
     console.log('🖱️ Column clicked:', column?.name, 'enumDef:', !!enumDef, 'position:', position);
     
-    // Close edge tooltip if open
+    // Close other tooltips
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
+    setTableNoteTooltipData(null);
     
     // Open column tooltip
     setColumnTooltipData({
@@ -130,9 +133,32 @@ const DBMLPreview = ({ initialContent }) => {
     console.log('✅ Column tooltip data set');
   }, []);
 
+  // Handle table note click for tooltip display
+  const handleTableNoteClick = useCallback((table, position) => {
+    console.log('🖱️ Table note clicked:', table?.name, 'position:', position);
+    
+    // Close other tooltips
+    setTooltipData(null);
+    setSelectedEdgeIds(new Set());
+    setColumnTooltipData(null);
+    
+    // Open table note tooltip
+    setTableNoteTooltipData({
+      table,
+      position
+    });
+    
+    console.log('✅ Table note tooltip data set');
+  }, []);
+
   // Handle column tooltip close
   const handleCloseColumnTooltip = useCallback(() => {
     setColumnTooltipData(null);
+  }, []);
+
+  // Handle table note tooltip close
+  const handleCloseTableNoteTooltip = useCallback(() => {
+    setTableNoteTooltipData(null);
   }, []);
 
   // Handle ESC key and click outside to close tooltips
@@ -142,6 +168,7 @@ const DBMLPreview = ({ initialContent }) => {
         setTooltipData(null);
         setSelectedEdgeIds(new Set());
         setColumnTooltipData(null);
+        setTableNoteTooltipData(null);
       }
     };
 
@@ -154,6 +181,7 @@ const DBMLPreview = ({ initialContent }) => {
         setTooltipData(null);
         setSelectedEdgeIds(new Set());
         setColumnTooltipData(null);
+        setTableNoteTooltipData(null);
       }
     };
 
@@ -252,7 +280,7 @@ const DBMLPreview = ({ initialContent }) => {
       console.log('🔄 Layout reset');
       // Trigger re-transform with empty positions
       if (dbmlData) {
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
@@ -481,7 +509,7 @@ const DBMLPreview = ({ initialContent }) => {
           saveLayout(fileId, cleanedPositions);
         }
         
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick);
         console.log('✅ Transform successful - nodes:', newNodes.length, 'edges:', newEdges.length, 'tableGroups:', newTableGroups?.length || 0);
         console.log('💾 Using saved positions:', cleanedPositions);
         console.log('📊 First few generated nodes with positions:', newNodes.filter(n => n.type === 'tableHeader').slice(0, 3).map(n => ({ id: n.id, position: n.position })));
@@ -708,6 +736,14 @@ const DBMLPreview = ({ initialContent }) => {
           enumDef={columnTooltipData.enumDef}
           position={columnTooltipData.position}
           onClose={handleCloseColumnTooltip}
+        />
+      )}
+
+      {tableNoteTooltipData && (
+        <TableNoteTooltip
+          table={tableNoteTooltipData.table}
+          position={tableNoteTooltipData.position}
+          onClose={handleCloseTableNoteTooltip}
         />
       )}
     </div>

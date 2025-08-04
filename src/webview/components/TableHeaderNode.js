@@ -1,14 +1,13 @@
 import React from 'react';
 
 const TableHeaderNode = ({ data }) => {
-  const { table, columnCount = 0, tableWidth = 200, hasMultipleSchema = false } = data;
+  const { table, columnCount = 0, tableWidth = 200, hasMultipleSchema = false, onTableNoteClick } = data;
 
   // Calculate dimensions based on content
   const headerHeight = 42; // Header section height
-  const noteHeight = table.note ? 30 : 0; // Note section height if present
   const columnHeight = 30; // Height per column
   const tablePadding = 8; // Padding around column area
-  const totalHeight = headerHeight + noteHeight + (columnCount * columnHeight) + (tablePadding * 2);
+  const totalHeight = headerHeight + (columnCount * columnHeight) + (tablePadding * 2);
   let title = table.name;
   if (hasMultipleSchema && table.schemaName) {
     title = `${table.schemaName}.${table.name}`;
@@ -38,36 +37,45 @@ const TableHeaderNode = ({ data }) => {
         borderRadius: '8px 8px 0 0',
         boxSizing: 'border-box',
         display: 'flex',
-        alignItems: 'center'
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
-        📋 {title}
+        <span>📋 {title}</span>
+        {table.note && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onTableNoteClick) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                onTableNoteClick(table, {
+                  x: rect.right + 10,
+                  y: rect.top
+                });
+              }
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--vscode-button-foreground)',
+              cursor: 'pointer',
+              fontSize: '12px',
+              padding: '2px 4px',
+              borderRadius: '2px',
+              opacity: 0.8
+            }}
+            title="View table note"
+          >
+            📝
+          </button>
+        )}
       </div>
 
-      {/* Table Note (if exists) */}
-      {table.note && (
-        <div style={{
-          padding: '6px 12px',
-          fontSize: '11px',
-          color: 'var(--vscode-descriptionForeground)',
-          fontStyle: 'italic',
-          background: 'var(--vscode-editor-inactiveSelectionBackground)',
-          borderTop: '1px solid var(--vscode-panel-border)',
-          borderLeft: '2px solid var(--vscode-panel-border)',
-          borderRight: '2px solid var(--vscode-panel-border)',
-          height: `${noteHeight}px`,
-          boxSizing: 'border-box',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          {table.note}
-        </div>
-      )}
 
       {/* Column Area - Visual padding container */}
       {columnCount > 0 && (
         <div style={{
           padding: `${tablePadding}px`,
-          borderTop: table.note ? 'none' : '1px solid var(--vscode-panel-border)',
+          borderTop: '1px solid var(--vscode-panel-border)',
           borderLeft: '2px solid var(--vscode-panel-border)',
           borderRight: '2px solid var(--vscode-panel-border)',
           borderBottom: '2px solid var(--vscode-panel-border)',

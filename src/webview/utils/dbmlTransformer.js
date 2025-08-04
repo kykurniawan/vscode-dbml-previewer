@@ -188,7 +188,7 @@ const analyzeColumnRelationships = (refs, tables) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null) => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
@@ -289,15 +289,15 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
         tableWidth,
         hasMultipleSchema,
         tableGroup,
+        onTableNoteClick, // Add table note click handler
       },
     };
     nodes.push(tableHeaderNode);
 
     // Create column nodes (children)
     const headerHeight = 42;
-    const noteHeight = table.note ? 30 : 0;
     const tablePadding = 8;
-    const startY = headerHeight + noteHeight + tablePadding; // Include padding offset
+    const startY = headerHeight + tablePadding; // Include padding offset
     const columnWidth = tableWidth - (tablePadding * 2); // Subtract both side paddings
 
     table.fields?.forEach((column, columnIndex) => {
@@ -428,9 +428,8 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], savedPositions = {}
   const tablePadding = 8;
   
   tableHeaderNodes.forEach((tableNode) => {
-    const { table, columnCount, tableWidth } = tableNode.data;
-    const noteHeight = table.note ? 30 : 0;
-    const totalHeight = headerHeight + noteHeight + (columnCount * columnHeight) + (tablePadding * 2);
+    const { columnCount, tableWidth } = tableNode.data;
+    const totalHeight = headerHeight + (columnCount * columnHeight) + (tablePadding * 2);
 
     tableDimensions[tableNode.id] = {
       width: tableWidth,
@@ -534,7 +533,6 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], savedPositions = {}
           const tableWidth = tableNode.data.tableWidth || 200;
           const tableHeight = 
             42 + // header height
-            (tableNode.data.table?.note ? 30 : 0) + // note height
             (tableNode.data.columnCount * 30) + // columns height
             16; // padding
 
