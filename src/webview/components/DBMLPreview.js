@@ -416,6 +416,9 @@ const DBMLPreview = ({ initialContent }) => {
     if (!content || content.trim() === '') {
       setDbmlData(null);
       setParseError(null);
+      setNodes([]);
+      setEdges([]);
+      setTableGroups([]);
       return;
     }
 
