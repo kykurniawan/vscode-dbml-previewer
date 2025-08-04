@@ -115,7 +115,7 @@ const EdgeTooltip = ({ edge, position, onClose }) => {
   };
 
   return (
-    <div ref={tooltipRef} style={tooltipStyle}>
+    <div ref={tooltipRef} style={tooltipStyle} data-tooltip="edge">
       <button
         onClick={onClose}
         style={closeButtonStyle}

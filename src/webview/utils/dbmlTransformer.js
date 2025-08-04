@@ -106,6 +106,28 @@ const mapSourceAndTarget = (ref) => {
 }
 
 /**
+ * Find enum definition for a given column type
+ * @param {string} typeName - The column type name
+ * @param {Object} enums - Object mapping enum names to enum definitions
+ * @returns {Object|null} Enum definition or null if not found
+ */
+const findEnumForType = (typeName, enums) => {
+  // Try direct match first
+  if (enums[typeName]) {
+    return enums[typeName];
+  }
+  
+  // Try without schema prefix (for backwards compatibility)
+  const enumKeys = Object.keys(enums);
+  const matchingKey = enumKeys.find(key => {
+    const enumName = key.includes('.') ? key.split('.').pop() : key;
+    return enumName === typeName;
+  });
+  
+  return matchingKey ? enums[matchingKey] : null;
+};
+
+/**
  * Analyze column relationships from DBML refs
  * @param {Array} refs - Array of reference objects with proper fieldNames
  * @param {Array} tables - Array of table objects with schema info
@@ -166,15 +188,16 @@ const analyzeColumnRelationships = (refs, tables) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData, savedPositions = {}) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null) => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
 
-  // Collect tables, refs, and tableGroups from all schemas
+  // Collect tables, refs, tableGroups, and enums from all schemas
   const allTables = [];
   const allRefs = [];
   const allTableGroups = [];
+  const allEnums = {};
   const hasMultipleSchema = dbmlData.schemas.length > 1;
 
   dbmlData.schemas.forEach(schema => {
@@ -208,6 +231,23 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}) => {
         fullName: hasMultipleSchema && schema.name ? `${schema.name}.${tableGroup.name}` : tableGroup.name
       }));
       allTableGroups.push(...tableGroupsWithSchema);
+    }
+
+    // Collect enums from this schema
+    if (schema.enums) {
+      schema.enums.forEach(enumDef => {
+        // Create enum key with schema prefix if multiple schemas
+        const enumKey = hasMultipleSchema && schema.name ? `${schema.name}.${enumDef.name}` : enumDef.name;
+        allEnums[enumKey] = {
+          name: enumDef.name,
+          fullName: enumKey,
+          schemaName: schema.name || 'public',
+          values: enumDef.values ? enumDef.values.map(value => ({
+            name: value.name,
+            note: value.note || null
+          })) : []
+        };
+      });
     }
   });
 
@@ -262,6 +302,11 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}) => {
 
     table.fields?.forEach((column, columnIndex) => {
       const columnHandleInfo = columnHandles[table.fullName]?.[column.name];
+      
+      // Check if this column type is an enum
+      const columnTypeName = column.type?.type_name;
+      const enumDef = columnTypeName ? findEnumForType(columnTypeName, allEnums) : null;
+      
       const columnNode = {
         id: `${table.fullName}.${column.name}`,
         type: 'column',
@@ -274,7 +319,9 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}) => {
           column,
           hasSourceHandle: columnHandleInfo?.isSource || false,
           hasTargetHandle: columnHandleInfo?.isTarget || false,
-          columnWidth
+          columnWidth,
+          enumDef, // Add enum definition if this column is an enum type
+          onColumnClick // Add column click handler
         },
         extent: 'parent', // Constrain to parent bounds
         draggable: false, // Disable dragging for column nodes

@@ -2,7 +2,7 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 
 const ColumnNode = ({ data }) => {
-  const { column, hasSourceHandle, hasTargetHandle, columnWidth = 196 } = data;
+  const { column, hasSourceHandle, hasTargetHandle, columnWidth = 196, enumDef, onColumnClick } = data;
 
   const getColumnIcon = (column) => {
     if (column.pk) return '🔑';
@@ -15,23 +15,49 @@ const ColumnNode = ({ data }) => {
     return column.type?.type_name || 'unknown';
   };
 
+  const handleClick = (event) => {
+    console.log('🎯 ColumnNode clicked:', column?.name, 'onColumnClick exists:', !!onColumnClick);
+    
+    // Prevent React Flow from interfering with the click event
+    event.stopPropagation();
+    event.preventDefault();
+    
+    if (onColumnClick) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const position = {
+        x: rect.right + 10, // Position tooltip to the right of the column
+        y: rect.top
+      };
+      console.log('📍 Calling onColumnClick with position:', position);
+      onColumnClick(column, enumDef, position);
+    } else {
+      console.warn('⚠️ onColumnClick handler is not available');
+    }
+  };
+
   return (
-    <div style={{
-      background: 'var(--vscode-editor-background)',
-      border: '1px solid var(--vscode-panel-border)',
-      borderRadius: '4px',
-      width: `${columnWidth}px`, // Dynamic width based on content
-      height: '28px', // Fixed height to match layout calculation
-      padding: '4px 8px',
-      fontSize: '12px',
-      color: 'var(--vscode-editor-foreground)',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      position: 'relative',
-      boxSizing: 'border-box',
-      backgroundColor: (hasSourceHandle || hasTargetHandle) ? 'var(--vscode-editor-inactiveSelectionBackground)' : 'transparent'
-    }}>
+    <div 
+      style={{
+        background: 'var(--vscode-editor-background)',
+        border: '1px solid var(--vscode-panel-border)',
+        borderRadius: '4px',
+        width: `${columnWidth}px`, // Dynamic width based on content
+        height: '28px', // Fixed height to match layout calculation
+        padding: '4px 8px',
+        fontSize: '12px',
+        color: 'var(--vscode-editor-foreground)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'relative',
+        boxSizing: 'border-box',
+        backgroundColor: (hasSourceHandle || hasTargetHandle) ? 'var(--vscode-editor-inactiveSelectionBackground)' : 'transparent',
+        cursor: 'pointer'
+      }}
+      onClick={handleClick}
+      title={`Click to view details for ${column.name}${enumDef ? ' (enum)' : ''}`}
+      data-column-node="true"
+    >
       {/* Target Handle */}
       {hasTargetHandle && (
         <Handle

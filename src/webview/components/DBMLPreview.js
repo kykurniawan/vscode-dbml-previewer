@@ -15,6 +15,7 @@ import TableHeaderNode from './TableHeaderNode';
 import ColumnNode from './ColumnNode';
 import TableGroupNode from './TableGroupNode';
 import EdgeTooltip from './EdgeTooltip';
+import ColumnTooltip from './ColumnTooltip';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 import { 
   saveLayout, 
@@ -42,6 +43,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState(new Set());
   const [tooltipData, setTooltipData] = useState(null);
+  const [columnTooltipData, setColumnTooltipData] = useState(null);
   const [tableGroups, setTableGroups] = useState([]);
   const [draggedGroupPositions, setDraggedGroupPositions] = useState(new Map());
   const [fileId, setFileId] = useState(null);
@@ -54,6 +56,26 @@ const DBMLPreview = ({ initialContent }) => {
   const onConnect = useCallback(() => {
     // No-op: Manual connections disabled in preview mode
   }, []);
+
+  // Fallback node click handler for column nodes
+  const onNodeClick = useCallback((event, node) => {
+    console.log('🔥 React Flow node clicked:', node.type, node.id);
+    
+    if (node.type === 'column') {
+      console.log('📋 Column node clicked via React Flow fallback');
+      const columnData = node.data;
+      
+      if (columnData) {
+        // Calculate position based on node position
+        const position = {
+          x: (node.position?.x || 0) + (columnData.columnWidth || 200) + 20,
+          y: (node.position?.y || 0)
+        };
+        
+        handleColumnClick(columnData.column, columnData.enumDef, position);
+      }
+    }
+  }, [handleColumnClick]);
 
   // Handle edge click for tooltip display
   const onEdgeClick = useCallback((event, edge) => {
@@ -88,6 +110,60 @@ const DBMLPreview = ({ initialContent }) => {
   const handleCloseTooltip = useCallback(() => {
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
+  }, []);
+
+  // Handle column click for tooltip display
+  const handleColumnClick = useCallback((column, enumDef, position) => {
+    console.log('🖱️ Column clicked:', column?.name, 'enumDef:', !!enumDef, 'position:', position);
+    
+    // Close edge tooltip if open
+    setTooltipData(null);
+    setSelectedEdgeIds(new Set());
+    
+    // Open column tooltip
+    setColumnTooltipData({
+      column,
+      enumDef,
+      position
+    });
+    
+    console.log('✅ Column tooltip data set');
+  }, []);
+
+  // Handle column tooltip close
+  const handleCloseColumnTooltip = useCallback(() => {
+    setColumnTooltipData(null);
+  }, []);
+
+  // Handle ESC key and click outside to close tooltips
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setTooltipData(null);
+        setSelectedEdgeIds(new Set());
+        setColumnTooltipData(null);
+      }
+    };
+
+    const handleClickOutside = (event) => {
+      // Check if click is outside any tooltip or on a column node
+      const isClickInsideTooltip = event.target.closest('[data-tooltip]');
+      const isClickOnColumn = event.target.closest('[data-column-node]');
+      
+      if (!isClickInsideTooltip && !isClickOnColumn) {
+        setTooltipData(null);
+        setSelectedEdgeIds(new Set());
+        setColumnTooltipData(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('click', handleClickOutside);
+    };
   }, []);
 
   // Recalculate TableGroup bounds based on member table positions
@@ -176,13 +252,13 @@ const DBMLPreview = ({ initialContent }) => {
       console.log('🔄 Layout reset');
       // Trigger re-transform with empty positions
       if (dbmlData) {
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {});
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
       }
     }
-  }, [fileId, dbmlData, setNodes, setEdges]);
+  }, [fileId, dbmlData, setNodes, setEdges, handleColumnClick]);
 
   // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
@@ -405,7 +481,7 @@ const DBMLPreview = ({ initialContent }) => {
           saveLayout(fileId, cleanedPositions);
         }
         
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick);
         console.log('✅ Transform successful - nodes:', newNodes.length, 'edges:', newEdges.length, 'tableGroups:', newTableGroups?.length || 0);
         console.log('💾 Using saved positions:', cleanedPositions);
         console.log('📊 First few generated nodes with positions:', newNodes.filter(n => n.type === 'tableHeader').slice(0, 3).map(n => ({ id: n.id, position: n.position })));
@@ -568,6 +644,7 @@ const DBMLPreview = ({ initialContent }) => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onEdgeClick={onEdgeClick}
+        onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         fitView
         attributionPosition="bottom-left"
@@ -622,6 +699,15 @@ const DBMLPreview = ({ initialContent }) => {
           edge={tooltipData.edge}
           position={tooltipData.position}
           onClose={handleCloseTooltip}
+        />
+      )}
+
+      {columnTooltipData && (
+        <ColumnTooltip
+          column={columnTooltipData.column}
+          enumDef={columnTooltipData.enumDef}
+          position={columnTooltipData.position}
+          onClose={handleCloseColumnTooltip}
         />
       )}
     </div>
