@@ -21,14 +21,11 @@ export const saveLayout = (fileId, positions) => {
     // Store in sessionStorage for webview persistence
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(existingLayouts));
-      console.log('💾 Layout SAVED successfully for file:', fileId);
-      console.log('💾 Positions saved:', positions);
-      console.log('💾 All stored layouts:', existingLayouts);
     } else {
-      console.warn('⚠️ sessionStorage not available');
+      console.warn('sessionStorage not available');
     }
   } catch (error) {
-    console.warn('❌ Failed to save layout:', error);
+    console.warn('Failed to save layout:', error);
   }
 };
 
@@ -40,20 +37,13 @@ export const saveLayout = (fileId, positions) => {
 export const loadLayout = (fileId) => {
   try {
     const existingLayouts = getStoredLayouts();
-    console.log('🔍 All stored layouts:', existingLayouts);
-    console.log('🔍 Looking for file ID:', fileId);
-    
     const fileLayout = existingLayouts[fileId];
     
     if (fileLayout && fileLayout.positions) {
-      console.log('✅ Layout FOUND for file:', fileId, fileLayout.positions);
       return fileLayout.positions;
-    } else {
-      console.log('❌ No layout found for file:', fileId);
-      console.log('❌ Available file IDs:', Object.keys(existingLayouts));
     }
   } catch (error) {
-    console.warn('❌ Failed to load layout:', error);
+    console.warn('Failed to load layout:', error);
   }
   
   return {};
@@ -72,7 +62,6 @@ export const clearLayout = (fileId) => {
       sessionStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(existingLayouts));
     }
     
-    console.log('Layout cleared for file:', fileId);
   } catch (error) {
     console.warn('Failed to clear layout:', error);
   }
@@ -103,7 +92,6 @@ const getStoredLayouts = () => {
 export const generateFileId = (filePath) => {
   // Use the file path directly as ID, normalizing path separators
   const normalizedPath = filePath.replace(/\\/g, '/'); // Normalize Windows paths
-  console.log('🆔 Using file path as ID:', normalizedPath);
   return normalizedPath;
 };
 
@@ -115,19 +103,15 @@ export const generateFileId = (filePath) => {
 export const extractTablePositions = (nodes) => {
   const positions = {};
   
-  console.log('📊 Extracting positions from', nodes.length, 'nodes');
-  
   nodes.forEach(node => {
     if (node.type === 'tableHeader' && node.position) {
       positions[node.id] = {
         x: node.position.x,
         y: node.position.y
       };
-      console.log('📊 Extracted position for', node.id, ':', node.position);
     }
   });
   
-  console.log('📊 Total positions extracted:', Object.keys(positions).length);
   return positions;
 };
 

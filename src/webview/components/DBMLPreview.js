@@ -34,7 +34,6 @@ const nodeTypes = {
 };
 
 const DBMLPreview = ({ initialContent }) => {
-  console.log('🎯 DBMLPreview component rendering with:', initialContent);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -52,7 +51,6 @@ const DBMLPreview = ({ initialContent }) => {
   const [savedPositions, setSavedPositions] = useState({});
   const [filePath, setFilePath] = useState(null);
 
-  console.log('🔄 State initialized - nodes:', nodes.length, 'edges:', edges.length);
 
   // Disabled manual connections for preview-only mode
   const onConnect = useCallback(() => {
@@ -61,10 +59,7 @@ const DBMLPreview = ({ initialContent }) => {
 
   // Fallback node click handler for column nodes
   const onNodeClick = useCallback((event, node) => {
-    console.log('🔥 React Flow node clicked:', node.type, node.id);
-    
     if (node.type === 'column') {
-      console.log('📋 Column node clicked via React Flow fallback');
       const columnData = node.data;
       
       if (columnData) {
@@ -116,8 +111,6 @@ const DBMLPreview = ({ initialContent }) => {
 
   // Handle column click for tooltip display
   const handleColumnClick = useCallback((column, enumDef, position) => {
-    console.log('🖱️ Column clicked:', column?.name, 'enumDef:', !!enumDef, 'position:', position);
-    
     // Close other tooltips
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
@@ -129,14 +122,10 @@ const DBMLPreview = ({ initialContent }) => {
       enumDef,
       position
     });
-    
-    console.log('✅ Column tooltip data set');
   }, []);
 
   // Handle table note click for tooltip display
   const handleTableNoteClick = useCallback((table, position) => {
-    console.log('🖱️ Table note clicked:', table?.name, 'position:', position);
-    
     // Close other tooltips
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
@@ -147,8 +136,6 @@ const DBMLPreview = ({ initialContent }) => {
       table,
       position
     });
-    
-    console.log('✅ Table note tooltip data set');
   }, []);
 
   // Handle column tooltip close
@@ -260,12 +247,8 @@ const DBMLPreview = ({ initialContent }) => {
       setNodes(currentNodes => {
         if (currentNodes.length > 0) {
           const positions = extractTablePositions(currentNodes);
-          console.log('💾 Saving layout for fileId:', fileId);
-          console.log('💾 Current nodes count:', currentNodes.length);
-          console.log('💾 Extracted positions:', positions);
           setSavedPositions(positions);
           saveLayout(fileId, positions);
-          console.log('💾 Layout saved successfully');
         }
         return currentNodes; // Don't modify nodes, just extract positions
       });
@@ -277,7 +260,6 @@ const DBMLPreview = ({ initialContent }) => {
     if (fileId) {
       setSavedPositions({});
       saveLayout(fileId, {});
-      console.log('🔄 Layout reset');
       // Trigger re-transform with empty positions
       if (dbmlData) {
         const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick);
@@ -290,7 +272,6 @@ const DBMLPreview = ({ initialContent }) => {
 
   // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
-    console.log('🔄 handleNodesChange called with', changes.length, 'changes:', changes);
     // Track group drag start positions
     const groupDragStartChanges = changes.filter(change =>
       change.type === 'position' &&
@@ -359,7 +340,6 @@ const DBMLPreview = ({ initialContent }) => {
               setSavedPositions(updatedPositions);
               if (fileId) {
                 saveLayout(fileId, updatedPositions);
-                console.log('💾 Layout saved for table group:', groupName, updatedPositions);
               }
             }
 
@@ -389,18 +369,11 @@ const DBMLPreview = ({ initialContent }) => {
     // Check if group drag ended (we already saved positions above)
     const hasGroupDragEnd = groupDragEndChanges.length > 0;
 
-    console.log('🔍 Position changes detected:', hasAnyTablePositionChanges);
-    console.log('🔍 Group drag ended:', hasGroupDragEnd);
-
     // Save layout for any table position changes (except when group drag already saved)
     if (hasAnyTablePositionChanges && !hasGroupDragEnd) {
-      console.log('✅ Will save layout for table position changes');
       setTimeout(() => {
-        console.log('🔄 Saving layout for table position changes');
         saveCurrentLayout();
       }, 100);
-    } else {
-      console.log('❌ Not saving layout - hasAnyTablePositionChanges:', hasAnyTablePositionChanges, 'hasGroupDragEnd:', hasGroupDragEnd);
     }
     
     // Recalculate bounds for table groups if needed (for both individual and group moves)
@@ -447,12 +420,10 @@ const DBMLPreview = ({ initialContent }) => {
       
       // Generate file ID based on file path
       const newFileId = generateFileId(windowFilePath);
-      console.log('🆔 Generated file ID from path:', newFileId);
       setFileId(newFileId);
       
       // Load saved positions for this file
       const positions = loadLayout(newFileId);
-      console.log('🔍 Loaded positions for file', newFileId, ':', positions);
       setSavedPositions(positions);
     }
   }, []);
@@ -490,12 +461,10 @@ const DBMLPreview = ({ initialContent }) => {
 
   // Transform DBML data to nodes and edges when data changes
   useEffect(() => {
-    console.log('🔄 Transform effect triggered, dbmlData exists:', !!dbmlData, 'fileId:', fileId);
     if (dbmlData && fileId !== null) {
       try {
         // Get current saved positions at execution time
         const currentSavedPositions = loadLayout(fileId);
-        console.log('💾 Current saved positions:', currentSavedPositions);
         
         // Clean up obsolete positions first
         const tableHeaderIds = [];
@@ -513,15 +482,11 @@ const DBMLPreview = ({ initialContent }) => {
         }
         
         const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick);
-        console.log('✅ Transform successful - nodes:', newNodes.length, 'edges:', newEdges.length, 'tableGroups:', newTableGroups?.length || 0);
-        console.log('💾 Using saved positions:', cleanedPositions);
-        console.log('📊 First few generated nodes with positions:', newNodes.filter(n => n.type === 'tableHeader').slice(0, 3).map(n => ({ id: n.id, position: n.position })));
-        console.log('📦 TableGroups:', newTableGroups?.length || 0);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
       } catch (error) {
-        console.error('❌ Error transforming DBML data:', error);
+        console.error('Error transforming DBML data:', error);
       }
     }
   }, [dbmlData, fileId, setNodes, setEdges]);

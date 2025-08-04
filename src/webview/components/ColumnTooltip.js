@@ -1,10 +1,7 @@
 import React from 'react';
 
 const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
-  console.log('🔍 ColumnTooltip render:', { column: !!column, enumDef: !!enumDef, position: !!position });
-  
   if (!column || !position) {
-    console.warn('⚠️ ColumnTooltip missing required props:', { column: !!column, position: !!position });
     return null;
   }
 

@@ -136,7 +136,6 @@ const findEnumForType = (typeName, enums) => {
 const analyzeColumnRelationships = (refs, tables) => {
   const columnHandles = {};
 
-  console.log('dbg: refs count:', refs.length);
 
   refs.forEach(ref => {
     // Use mapSourceAndTarget to properly determine source and target
@@ -354,11 +353,6 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
           const targetRelation = targetEndpoint.relation || '1';
           const cardinality = `${sourceRelation}:${targetRelation}`;
 
-          console.log(`dbg: ------`);
-          console.log(`dbg: source ${sourceTable}.${sourceField} -> ${sourceRelation}`);
-          console.log(`dbg: target ${targetTable}.${targetField} -> ${targetRelation}`);
-          console.log(`dbg: cardinality ${cardinality}`);
-          console.log(`dbg: ------`);
 
           edges.push({
             id: `${sourceTable}.${sourceField}-${targetTable}.${targetField}-${index}-${fieldIndex}`,

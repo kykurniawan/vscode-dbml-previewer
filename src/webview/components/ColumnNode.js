@@ -16,8 +16,6 @@ const ColumnNode = ({ data }) => {
   };
 
   const handleClick = (event) => {
-    console.log('🎯 ColumnNode clicked:', column?.name, 'onColumnClick exists:', !!onColumnClick);
-    
     // Prevent React Flow from interfering with the click event
     event.stopPropagation();
     event.preventDefault();
@@ -28,10 +26,7 @@ const ColumnNode = ({ data }) => {
         x: rect.right + 10, // Position tooltip to the right of the column
         y: rect.top
       };
-      console.log('📍 Calling onColumnClick with position:', position);
       onColumnClick(column, enumDef, position);
-    } else {
-      console.warn('⚠️ onColumnClick handler is not available');
     }
   };
 
