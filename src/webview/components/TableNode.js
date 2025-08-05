@@ -46,7 +46,7 @@ const TableNode = ({ data }) => {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <span>📋 {table.name}</span>
+        <span>{table.name}</span>
         {table.note && (
           <button
             onClick={(e) => {
