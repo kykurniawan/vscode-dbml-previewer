@@ -1,6 +1,7 @@
 import globals from "globals";
 
-export default [{
+export default [
+{
     files: ["**/*.js"],
     languageOptions: {
         globals: {
@@ -11,6 +12,36 @@ export default [{
 
         ecmaVersion: 2022,
         sourceType: "module",
+    },
+
+    rules: {
+        "no-const-assign": "warn",
+        "no-this-before-super": "warn",
+        "no-undef": "warn",
+        "no-unreachable": "warn",
+        "no-unused-vars": "warn",
+        "constructor-super": "warn",
+        "valid-typeof": "warn",
+    },
+},
+{
+    files: ["src/webview/**/*.js"],
+    languageOptions: {
+        globals: {
+            ...globals.browser,
+            window: "readonly",
+            document: "readonly",
+            sessionStorage: "readonly",
+            acquireVsCodeApi: "readonly",
+        },
+        
+        ecmaVersion: 2022,
+        sourceType: "module",
+        parserOptions: {
+            ecmaFeatures: {
+                jsx: true,
+            },
+        },
     },
 
     rules: {

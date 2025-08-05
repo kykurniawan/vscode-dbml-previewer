@@ -2,6 +2,37 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 0.0.2
+
+### Added
+- **Enhanced Error Handling System**: Comprehensive DBML parser error display with detailed technical information
+- **Smart Error Parser**: Intelligent extraction of line numbers, column positions, and error context
+- **Rich Error Display Component**: Professional UI with collapsible sections for context, suggestions, and technical details
+- **Actionable Error Suggestions**: Context-aware suggestions with DBML syntax examples and common fix patterns
+- **Error Categorization**: Automatic classification of errors into types (syntax, encoding, expectation, structure)
+- **Code Context Display**: Shows error location with syntax highlighting and surrounding code lines
+- **Comprehensive Error Serialization**: Complete error object information with stack traces and property details
+
+### Fixed
+- **"[object Object]" Display Issue**: Technical error details now show readable information instead of `[object Object]`
+- **Error Message Extraction**: Improved handling of various error object formats and fallback scenarios
+- **Circular Reference Handling**: Safe serialization of complex error objects with circular references
+- **Function Property Display**: Proper handling of error objects containing function properties
+
+### Improved
+- **Error User Experience**: Professional error display similar to modern IDEs with clear visual hierarchy
+- **Debugging Workflow**: Precise error locations with line/column numbers and code context
+- **Error Recovery**: Better retry functionality with enhanced error analysis
+- **Technical Details**: Expandable sections for stack traces, raw error objects, and debug information
+
+### Technical
+- Added `src/webview/utils/errorParser.js` - Core error parsing and enhancement utility
+- Added `src/webview/components/ErrorDisplay.js` - Rich error display component
+- Updated `src/webview/components/DBMLPreview.js` - Integration with enhanced error handling
+- Updated `eslint.config.mjs` - Improved React JSX support configuration
+- Enhanced error serialization with multi-strategy message extraction
+- Comprehensive test coverage for various error object formats
+
 ## 0.0.1
 
 ### Added

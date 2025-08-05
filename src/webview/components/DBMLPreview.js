@@ -17,7 +17,9 @@ import TableGroupNode from './TableGroupNode';
 import EdgeTooltip from './EdgeTooltip';
 import ColumnTooltip from './ColumnTooltip';
 import TableNoteTooltip from './TableNoteTooltip';
+import ErrorDisplay from './ErrorDisplay';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
+import { parseDBMLError, formatErrorForDisplay } from '../utils/errorParser';
 import { 
   saveLayout, 
   loadLayout, 
@@ -40,6 +42,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [dbmlData, setDbmlData] = useState(null);
   const [dbmlContent, setDbmlContent] = useState(initialContent || '');
   const [parseError, setParseError] = useState(null);
+  const [enhancedErrorInfo, setEnhancedErrorInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEdgeIds, setSelectedEdgeIds] = useState(new Set());
   const [tooltipData, setTooltipData] = useState(null);
@@ -389,6 +392,7 @@ const DBMLPreview = ({ initialContent }) => {
     if (!content || content.trim() === '') {
       setDbmlData(null);
       setParseError(null);
+      setEnhancedErrorInfo(null);
       setNodes([]);
       setEdges([]);
       setTableGroups([]);
@@ -397,6 +401,7 @@ const DBMLPreview = ({ initialContent }) => {
 
     setIsLoading(true);
     setParseError(null);
+    setEnhancedErrorInfo(null);
 
     try {
       const parser = new Parser();
@@ -404,7 +409,13 @@ const DBMLPreview = ({ initialContent }) => {
       setDbmlData(parsed);
     } catch (error) {
       console.error('DBML Parse Error:', error);
+      
+      // Parse and enhance the error information
+      const parsedError = parseDBMLError(error, content);
+      const formattedError = formatErrorForDisplay(parsedError);
+      
       setParseError(error.message || 'Failed to parse DBML content');
+      setEnhancedErrorInfo(formattedError);
       setDbmlData(null);
     } finally {
       setIsLoading(false);
@@ -531,48 +542,14 @@ const DBMLPreview = ({ initialContent }) => {
     }
   }, [selectedEdgeIds, edges, setEdges]);
 
-  // Show error state
-  if (parseError) {
+  // Show error state with enhanced error display
+  if (parseError && enhancedErrorInfo) {
     return (
-      <div style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: '16px',
-        padding: '20px',
-        boxSizing: 'border-box'
-      }}>
-        <div style={{
-          background: 'var(--vscode-inputValidation-errorBackground)',
-          border: '1px solid var(--vscode-inputValidation-errorBorder)',
-          color: 'var(--vscode-inputValidation-errorForeground)',
-          padding: '16px',
-          borderRadius: '4px',
-          maxWidth: '600px',
-          textAlign: 'center'
-        }}>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>❌ DBML Parse Error</h3>
-          <p style={{ margin: '0', fontSize: '14px', fontFamily: 'monospace' }}>
-            {parseError}
-          </p>
-        </div>
-        <button
-          onClick={() => parseDBML(dbmlContent)}
-          style={{
-            background: 'var(--vscode-button-background)',
-            color: 'var(--vscode-button-foreground)',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '2px',
-            cursor: 'pointer'
-          }}
-        >
-          Retry Parse
-        </button>
-      </div>
+      <ErrorDisplay
+        errorInfo={enhancedErrorInfo}
+        onRetry={() => parseDBML(dbmlContent)}
+        content={dbmlContent}
+      />
     );
   }
 
