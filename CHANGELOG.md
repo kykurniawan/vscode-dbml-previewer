@@ -2,6 +2,24 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 0.0.3
+
+### Fixed
+- **Table Header Width Overflow**: Fixed issue where tables with very long names would cause header text to overlap or overflow
+- **Automatic Width Calculation**: Table width now automatically adjusts based on table name length to prevent text truncation
+- **Schema-Prefixed Table Names**: Proper width calculation for multi-schema databases where table names include schema prefixes
+
+### Improved
+- **Cleaner User Interface**: Removed table header emoji (📋) for a more professional and streamlined appearance
+- **Header Layout Algorithm**: Enhanced `calculateTableWidth()` function to consider both column content and header text requirements
+- **Multi-Schema Support**: Better handling of table name display width in multi-schema environments
+
+### Technical
+- Added `calculateHeaderWidth()` function in `src/webview/utils/dbmlTransformer.js` for precise header width calculation
+- Updated `calculateTableWidth()` function to use `Math.max()` between header width, column width, and minimum width requirements
+- Modified `TableNode.js` and `TableHeaderNode.js` components to remove emoji icons
+- Enhanced width calculation logic to account for table notes button when present
+
 ## 0.0.2
 
 ### Added

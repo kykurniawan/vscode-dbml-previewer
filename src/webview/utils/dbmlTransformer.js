@@ -33,21 +33,57 @@ const calculateColumnWidth = (column) => {
 };
 
 /**
- * Calculate the optimal width for a table based on its columns
+ * Calculate the width needed for the table header based on its content
  * @param {Object} table - Table object
+ * @param {Boolean} hasMultipleSchema - Whether there are multiple schemas
  * @returns {Number} Width in pixels
  */
-const calculateTableWidth = (table) => {
-  if (!table.fields || table.fields.length === 0) {
-    return 200; // Default minimum width
-  }
+const calculateHeaderWidth = (table, hasMultipleSchema = false) => {
+  // Base padding and margins for header
+  const headerPadding = 24; // 12px padding on each side
+  const noteButtonWidth = table.note ? 20 : 0; // Width of note button if present
+  const marginBetweenElements = 8;
 
-  // Find the widest column
-  const maxColumnWidth = Math.max(...table.fields.map(calculateColumnWidth));
+  // Calculate table name width (including schema prefix if needed)
+  let tableName = table.name;
+  if (hasMultipleSchema && table.schemaName) {
+    tableName = `${table.schemaName}.${table.name}`;
+  }
+  
+  // Approximate 8px per character for 14px bold font
+  const tableNameWidth = tableName.length * 8;
+
+  // Total header width calculation
+  const totalWidth = headerPadding + tableNameWidth + (noteButtonWidth ? marginBetweenElements + noteButtonWidth : 0);
+
+  return totalWidth;
+};
+
+/**
+ * Calculate the optimal width for a table based on its columns and header
+ * @param {Object} table - Table object
+ * @param {Boolean} hasMultipleSchema - Whether there are multiple schemas
+ * @returns {Number} Width in pixels
+ */
+const calculateTableWidth = (table, hasMultipleSchema = false) => {
+  // Calculate header width requirement
+  const headerWidth = calculateHeaderWidth(table, hasMultipleSchema);
+  
+  // Calculate column width requirement
+  let maxColumnWidth = 0;
+  if (table.fields && table.fields.length > 0) {
+    maxColumnWidth = Math.max(...table.fields.map(calculateColumnWidth));
+  }
 
   // Add padding for parent container (8px padding on each side + borders)
   const tablePadding = 8;
-  return maxColumnWidth + (tablePadding * 2);
+  const columnBasedWidth = maxColumnWidth + (tablePadding * 2);
+
+  // Default minimum width
+  const minWidth = 200;
+
+  // Return the maximum of header width, column width, or minimum width
+  return Math.max(headerWidth, columnBasedWidth, minWidth);
 };
 
 
@@ -274,7 +310,7 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
 
   tables.forEach((table) => {
     const columnCount = table.fields?.length || 0;
-    const tableWidth = calculateTableWidth(table);
+    const tableWidth = calculateTableWidth(table, hasMultipleSchema);
     const tableGroup = tableToGroupMap[table.name];
 
     // Create table header node (parent) with schema-aware ID

@@ -40,7 +40,7 @@ const TableHeaderNode = ({ data }) => {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <span>📋 {title}</span>
+        <span>{title}</span>
         {table.note && (
           <button
             onClick={(e) => {
