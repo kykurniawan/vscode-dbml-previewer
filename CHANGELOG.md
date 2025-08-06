@@ -2,6 +2,53 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 0.0.4
+
+### Added
+- **Advanced Navigation System**: Comprehensive table navigation with searchable dropdown menu for quick table location
+- **Interactive Minimap**: Visual minimap for easy navigation across large database schemas with VS Code theme integration
+- **Sticky Notes Support**: Resizable sticky notes functionality for documentation and annotations within diagrams
+- **Enhanced Zoom Controls**: Improved zoom capabilities with extended zoom-out range for viewing very large schemas
+
+### Fixed
+- **Large Schema Navigation**: Fixed zoom out limitations by extending minimum zoom to 0.05x, allowing complete overview of extensive database designs
+- **Navigation UX**: Resolved navigation challenges in complex multi-table environments with dedicated navigation tools
+
+### Improved
+- **Search and Discovery**: Real-time table search with highlight matching and keyboard navigation support
+- **Navigation Experience**: Smooth animated transitions when navigating to tables with automatic centering and appropriate zoom levels
+
+### Features Detail
+- **Table Navigation Dropdown**: 
+  - Searchable dropdown with fuzzy matching and result highlighting
+  - Schema grouping for multi-schema databases with proper organization
+  - Keyboard navigation support (Enter to select, Escape to close)
+  - Auto-focus search input for immediate typing
+  - Table count indicators and grouped results display
+- **Interactive Minimap**:
+  - Positioned bottom-right with pannable functionality
+  - VS Code theme variables integration for consistent appearance
+  - Border and shadow styling matching editor aesthetics
+  - Node visualization with proper stroke and fill colors
+- **Resizable Sticky Notes**:
+  - Drag-and-drop positioning with automatic layout persistence
+  - Resizable dimensions with minimum/maximum size constraints
+  - Sticky note visual styling with folded corner effects
+  - Content overflow handling with scrollable text areas
+- **Enhanced Zoom System**:
+  - Extended zoom range from 0.05x to 2x (previously limited zoom out)
+  - Smooth zoom transitions with proper focal point handling
+  - Improved performance for large schema rendering at low zoom levels
+
+### Technical
+- Updated `src/webview/components/DBMLPreview.js` with MiniMap component integration and enhanced zoom controls
+- Added `src/webview/components/TableNavigationDropdown.js` for advanced table search and navigation
+- Added `src/webview/components/StickyNote.js` with NodeResizer integration for resizable note functionality  
+- Enhanced ReactFlow configuration with `minZoom={0.05}` and `maxZoom={2}` for improved zoom range
+- Integrated Panel-based UI components for better user experience and consistent positioning
+- Added search highlighting functionality with regex-based matching and visual emphasis
+- Implemented automatic table centering with duration-based smooth animations using `setCenter()` API
+
 ## 0.0.3
 
 ### Fixed
