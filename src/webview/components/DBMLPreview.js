@@ -7,6 +7,7 @@ import {
   useEdgesState,
   addEdge,
   Panel,
+  MiniMap,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Parser } from '@dbml/core';
@@ -20,12 +21,12 @@ import TableNoteTooltip from './TableNoteTooltip';
 import ErrorDisplay from './ErrorDisplay';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 import { parseDBMLError, formatErrorForDisplay } from '../utils/errorParser';
-import { 
-  saveLayout, 
-  loadLayout, 
-  generateFileId, 
-  extractTablePositions, 
-  cleanupObsoletePositions 
+import {
+  saveLayout,
+  loadLayout,
+  generateFileId,
+  extractTablePositions,
+  cleanupObsoletePositions
 } from '../utils/layoutStorage';
 
 const nodeTypes = {
@@ -64,14 +65,14 @@ const DBMLPreview = ({ initialContent }) => {
   const onNodeClick = useCallback((event, node) => {
     if (node.type === 'column') {
       const columnData = node.data;
-      
+
       if (columnData) {
         // Calculate position based on node position
         const position = {
           x: (node.position?.x || 0) + (columnData.columnWidth || 200) + 20,
           y: (node.position?.y || 0)
         };
-        
+
         handleColumnClick(columnData.column, columnData.enumDef, position);
       }
     }
@@ -118,7 +119,7 @@ const DBMLPreview = ({ initialContent }) => {
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
     setTableNoteTooltipData(null);
-    
+
     // Open column tooltip
     setColumnTooltipData({
       column,
@@ -133,7 +134,7 @@ const DBMLPreview = ({ initialContent }) => {
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
     setColumnTooltipData(null);
-    
+
     // Open table note tooltip
     setTableNoteTooltipData({
       table,
@@ -166,7 +167,7 @@ const DBMLPreview = ({ initialContent }) => {
       // Check if click is outside any tooltip or on a column node
       const isClickInsideTooltip = event.target.closest('[data-tooltip]');
       const isClickOnColumn = event.target.closest('[data-column-node]');
-      
+
       if (!isClickInsideTooltip && !isClickOnColumn) {
         setTooltipData(null);
         setSelectedEdgeIds(new Set());
@@ -320,25 +321,25 @@ const DBMLPreview = ({ initialContent }) => {
             const groupName = groupNode?.data?.tableGroup?.name;
 
             if (groupName && (offsetX !== 0 || offsetY !== 0)) {
-              const updatedPositions = {...savedPositions};
-              
+              const updatedPositions = { ...savedPositions };
+
               updatedNodes.forEach((node, index) => {
                 if (node.type === 'tableHeader' && node.data?.tableGroup?.name === groupName) {
                   const newPosition = {
                     x: node.position.x + offsetX,
                     y: node.position.y + offsetY
                   };
-                  
+
                   updatedNodes[index] = {
                     ...node,
                     position: newPosition
                   };
-                  
+
                   // Update saved positions for member tables
                   updatedPositions[node.id] = newPosition;
                 }
               });
-              
+
               // Update saved positions state and storage
               setSavedPositions(updatedPositions);
               if (fileId) {
@@ -378,7 +379,7 @@ const DBMLPreview = ({ initialContent }) => {
         saveCurrentLayout();
       }, 100);
     }
-    
+
     // Recalculate bounds for table groups if needed (for both individual and group moves)
     if ((hasAnyTablePositionChanges || hasGroupDragEnd) && tableGroups.length > 0) {
       setTimeout(() => {
@@ -409,11 +410,11 @@ const DBMLPreview = ({ initialContent }) => {
       setDbmlData(parsed);
     } catch (error) {
       console.error('DBML Parse Error:', error);
-      
+
       // Parse and enhance the error information
       const parsedError = parseDBMLError(error, content);
       const formattedError = formatErrorForDisplay(parsedError);
-      
+
       setParseError(error.message || 'Failed to parse DBML content');
       setEnhancedErrorInfo(formattedError);
       setDbmlData(null);
@@ -428,11 +429,11 @@ const DBMLPreview = ({ initialContent }) => {
     const windowFilePath = window.filePath;
     if (windowFilePath) {
       setFilePath(windowFilePath);
-      
+
       // Generate file ID based on file path
       const newFileId = generateFileId(windowFilePath);
       setFileId(newFileId);
-      
+
       // Load saved positions for this file
       const positions = loadLayout(newFileId);
       setSavedPositions(positions);
@@ -476,7 +477,7 @@ const DBMLPreview = ({ initialContent }) => {
       try {
         // Get current saved positions at execution time
         const currentSavedPositions = loadLayout(fileId);
-        
+
         // Clean up obsolete positions first
         const tableHeaderIds = [];
         dbmlData.schemas?.forEach(schema => {
@@ -485,13 +486,13 @@ const DBMLPreview = ({ initialContent }) => {
             tableHeaderIds.push(`table-${fullName}`);
           });
         });
-        
+
         const cleanedPositions = cleanupObsoletePositions(currentSavedPositions, tableHeaderIds);
         if (Object.keys(cleanedPositions).length !== Object.keys(currentSavedPositions).length) {
           setSavedPositions(cleanedPositions);
           saveLayout(fileId, cleanedPositions);
         }
-        
+
         const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick);
         setNodes(newNodes);
         setEdges(newEdges);
@@ -623,9 +624,25 @@ const DBMLPreview = ({ initialContent }) => {
         attributionPosition="bottom-left"
         nodesConnectable={false}
         nodesDraggable={true}
+        minZoom={0.05}
+        maxZoom={2}
       >
         <Controls />
         <Background />
+        <MiniMap
+          nodeStrokeWidth={2}
+          nodeColor="var(--vscode-button-background)"
+          nodeStrokeColor="var(--vscode-panel-border)"
+          bgColor="var(--vscode-panel-background)"
+          maskColor="rgba(0, 0, 0, 0.1)"
+          maskStrokeColor="var(--vscode-panel-border)"
+          position="bottom-right"
+          pannable={true}
+          style={{
+            border: '1px solid var(--vscode-panel-border)',
+            borderRadius: '4px'
+          }}
+        />
         <Panel position="top-right">
           <div style={{
             background: 'var(--vscode-editor-background)',
