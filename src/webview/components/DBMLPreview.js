@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // eslint-disable-line no-unused-vars
 import {
   ReactFlow,
   Controls,
   Background,
   useNodesState,
   useEdgesState,
-  addEdge,
   Panel,
   MiniMap,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Parser } from '@dbml/core';
@@ -20,6 +20,7 @@ import ColumnTooltip from './ColumnTooltip';
 import TableNoteTooltip from './TableNoteTooltip';
 import StickyNote from './StickyNote';
 import ErrorDisplay from './ErrorDisplay';
+import TableNavigationDropdown from './TableNavigationDropdown';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 import { parseDBMLError, formatErrorForDisplay } from '../utils/errorParser';
 import {
@@ -36,6 +37,40 @@ const nodeTypes = {
   column: ColumnNode,
   tableGroup: TableGroupNode,
   stickyNote: StickyNote,
+};
+
+// Component that handles table navigation within React Flow context
+const TableNavigationPanel = ({ dbmlData }) => {
+  const { setCenter, getNode } = useReactFlow();
+
+  // Navigate to a specific table
+  const handleTableSelect = useCallback((option) => {
+    if (option.type === 'table') {
+      const tableNodeId = `table-${option.value}`;
+      const tableNode = getNode(tableNodeId);
+      
+      if (tableNode) {
+        const { x, y } = tableNode.position;
+        const tableWidth = tableNode.data?.tableWidth || 200;
+        const tableHeight = 42 + (tableNode.data?.columnCount || 0) * 30 + 16; // header + columns + padding
+        
+        // Center on the table with some offset
+        const centerX = x + tableWidth / 2;
+        const centerY = y + tableHeight / 2;
+        
+        setCenter(centerX, centerY, { zoom: 1, duration: 800 });
+      }
+    }
+  }, [setCenter, getNode]);
+
+  return (
+    <Panel position="top-left">
+      <TableNavigationDropdown 
+        dbmlData={dbmlData} 
+        onTableSelect={handleTableSelect}
+      />
+    </Panel>
+  );
 };
 
 const DBMLPreview = ({ initialContent }) => {
@@ -55,7 +90,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [draggedGroupPositions, setDraggedGroupPositions] = useState(new Map());
   const [fileId, setFileId] = useState(null);
   const [savedPositions, setSavedPositions] = useState({});
-  const [filePath, setFilePath] = useState(null);
+  const [, setFilePath] = useState(null);
 
 
   // Disabled manual connections for preview-only mode
@@ -658,6 +693,10 @@ const DBMLPreview = ({ initialContent }) => {
             borderRadius: '4px'
           }}
         />
+        
+        <TableNavigationPanel dbmlData={dbmlData} />
+
+        {/* Stats Panel - Top Right */}
         <Panel position="top-right">
           <div style={{
             background: 'var(--vscode-editor-background)',
@@ -677,7 +716,7 @@ const DBMLPreview = ({ initialContent }) => {
               {totalRefs} relationships
             </div>
             <div style={{ fontSize: '10px', color: 'var(--vscode-descriptionForeground)' }}>
-              {dbmlData.schemas?.length || 0} schema{(dbmlData.schemas?.length || 0) !== 1 ? 's' : ''}
+              {dbmlData?.schemas?.length || 0} schema{(dbmlData?.schemas?.length || 0) !== 1 ? 's' : ''}
             </div>
             <button
               onClick={resetLayout}
@@ -723,7 +762,6 @@ const DBMLPreview = ({ initialContent }) => {
           onClose={handleCloseTableNoteTooltip}
         />
       )}
-
     </div>
   );
 };
