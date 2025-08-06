@@ -223,7 +223,7 @@ const analyzeColumnRelationships = (refs, tables) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, onStickyNoteClick = null) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null) => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
@@ -391,13 +391,19 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
 
   // Create sticky note nodes
   notes.forEach((note) => {
+    const nodeId = `note-${note.fullName}`;
+    const savedPosition = savedPositions[nodeId];
+    
     const stickyNoteNode = {
-      id: `note-${note.fullName}`,
+      id: nodeId,
       type: 'stickyNote',
       position: { x: 0, y: 0 }, // Will be calculated by layout
       data: {
         note,
-        onNoteClick: onStickyNoteClick,
+        savedDimensions: savedPosition ? {
+          width: savedPosition.width,
+          height: savedPosition.height
+        } : null,
       },
     };
     nodes.push(stickyNoteNode);
@@ -516,8 +522,9 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], savedPositions = {}
 
   // Handle sticky note dimensions and positions
   stickyNoteNodes.forEach((noteNode) => {
-    const noteWidth = 200; // Default sticky note width
-    const noteHeight = 120; // Default sticky note height
+    const savedDimensions = noteNode.data.savedDimensions;
+    const noteWidth = savedDimensions?.width || 250; // Default sticky note width
+    const noteHeight = savedDimensions?.height || 180; // Default sticky note height
 
     tableDimensions[noteNode.id] = {
       width: noteWidth,

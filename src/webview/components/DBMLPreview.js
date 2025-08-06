@@ -19,7 +19,6 @@ import EdgeTooltip from './EdgeTooltip';
 import ColumnTooltip from './ColumnTooltip';
 import TableNoteTooltip from './TableNoteTooltip';
 import StickyNote from './StickyNote';
-import StickyNoteTooltip from './StickyNoteTooltip';
 import ErrorDisplay from './ErrorDisplay';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 import { parseDBMLError, formatErrorForDisplay } from '../utils/errorParser';
@@ -52,7 +51,6 @@ const DBMLPreview = ({ initialContent }) => {
   const [tooltipData, setTooltipData] = useState(null);
   const [columnTooltipData, setColumnTooltipData] = useState(null);
   const [tableNoteTooltipData, setTableNoteTooltipData] = useState(null);
-  const [stickyNoteTooltipData, setStickyNoteTooltipData] = useState(null);
   const [tableGroups, setTableGroups] = useState([]);
   const [draggedGroupPositions, setDraggedGroupPositions] = useState(new Map());
   const [fileId, setFileId] = useState(null);
@@ -78,22 +76,6 @@ const DBMLPreview = ({ initialContent }) => {
         };
 
         handleColumnClick(columnData.column, columnData.enumDef, position);
-      }
-    } else if (node.type === 'stickyNote') {
-      const noteData = node.data;
-
-      if (noteData && noteData.onNoteClick) {
-        // Calculate position based on mouse event or node position
-        const rect = event.currentTarget?.getBoundingClientRect();
-        const position = rect ? {
-          x: rect.right + 10,
-          y: rect.top
-        } : {
-          x: (node.position?.x || 0) + 220, // Default offset
-          y: node.position?.y || 0
-        };
-
-        noteData.onNoteClick(noteData.note, position);
       }
     }
   }, [handleColumnClick]);
@@ -154,7 +136,6 @@ const DBMLPreview = ({ initialContent }) => {
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
     setColumnTooltipData(null);
-    setStickyNoteTooltipData(null);
 
     // Open table note tooltip
     setTableNoteTooltipData({
@@ -163,20 +144,6 @@ const DBMLPreview = ({ initialContent }) => {
     });
   }, []);
 
-  // Handle sticky note click for tooltip display
-  const handleStickyNoteClick = useCallback((note, position) => {
-    // Close other tooltips
-    setTooltipData(null);
-    setSelectedEdgeIds(new Set());
-    setColumnTooltipData(null);
-    setTableNoteTooltipData(null);
-
-    // Open sticky note tooltip
-    setStickyNoteTooltipData({
-      note,
-      position
-    });
-  }, []);
 
   // Handle column tooltip close
   const handleCloseColumnTooltip = useCallback(() => {
@@ -188,10 +155,6 @@ const DBMLPreview = ({ initialContent }) => {
     setTableNoteTooltipData(null);
   }, []);
 
-  // Handle sticky note tooltip close
-  const handleCloseStickyNoteTooltip = useCallback(() => {
-    setStickyNoteTooltipData(null);
-  }, []);
 
   // Handle ESC key and click outside to close tooltips
   useEffect(() => {
@@ -201,8 +164,7 @@ const DBMLPreview = ({ initialContent }) => {
         setSelectedEdgeIds(new Set());
         setColumnTooltipData(null);
         setTableNoteTooltipData(null);
-        setStickyNoteTooltipData(null);
-      }
+          }
     };
 
     const handleClickOutside = (event) => {
@@ -215,8 +177,7 @@ const DBMLPreview = ({ initialContent }) => {
         setSelectedEdgeIds(new Set());
         setColumnTooltipData(null);
         setTableNoteTooltipData(null);
-        setStickyNoteTooltipData(null);
-      }
+          }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -309,13 +270,13 @@ const DBMLPreview = ({ initialContent }) => {
       saveLayout(fileId, {});
       // Trigger re-transform with empty positions
       if (dbmlData) {
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, handleStickyNoteClick);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
       }
     }
-  }, [fileId, dbmlData, setNodes, setEdges, handleColumnClick, handleTableNoteClick, handleStickyNoteClick]);
+  }, [fileId, dbmlData, setNodes, setEdges, handleColumnClick, handleTableNoteClick]);
 
   // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
@@ -547,7 +508,7 @@ const DBMLPreview = ({ initialContent }) => {
           saveLayout(fileId, cleanedPositions);
         }
 
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick, handleStickyNoteClick);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
@@ -763,13 +724,6 @@ const DBMLPreview = ({ initialContent }) => {
         />
       )}
 
-      {stickyNoteTooltipData && (
-        <StickyNoteTooltip
-          note={stickyNoteTooltipData.note}
-          position={stickyNoteTooltipData.position}
-          onClose={handleCloseStickyNoteTooltip}
-        />
-      )}
     </div>
   );
 };

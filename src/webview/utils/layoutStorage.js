@@ -105,10 +105,18 @@ export const extractTablePositions = (nodes) => {
   
   nodes.forEach(node => {
     // Save positions for table header nodes and sticky note nodes
-    if ((node.type === 'tableHeader' || node.type === 'stickyNote') && node.position) {
+    if (node.type === 'tableHeader' && node.position) {
       positions[node.id] = {
         x: node.position.x,
         y: node.position.y
+      };
+    } else if (node.type === 'stickyNote' && node.position) {
+      // For sticky notes, also save dimensions if available
+      positions[node.id] = {
+        x: node.position.x,
+        y: node.position.y,
+        width: node.measured?.width || node.style?.width || 250,
+        height: node.measured?.height || node.style?.height || 180
       };
     }
   });
