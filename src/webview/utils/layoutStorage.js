@@ -104,7 +104,8 @@ export const extractTablePositions = (nodes) => {
   const positions = {};
   
   nodes.forEach(node => {
-    if (node.type === 'tableHeader' && node.position) {
+    // Save positions for table header nodes and sticky note nodes
+    if ((node.type === 'tableHeader' || node.type === 'stickyNote') && node.position) {
       positions[node.id] = {
         x: node.position.x,
         y: node.position.y
@@ -116,18 +117,18 @@ export const extractTablePositions = (nodes) => {
 };
 
 /**
- * Clean up obsolete table positions that no longer exist in current schema
+ * Clean up obsolete positions that no longer exist in current schema
  * @param {Object} savedPositions - Previously saved positions
- * @param {Array} currentTableIds - Array of current table IDs
+ * @param {Array} currentNodeIds - Array of current node IDs (tables and sticky notes)
  * @returns {Object} Cleaned positions object
  */
-export const cleanupObsoletePositions = (savedPositions, currentTableIds) => {
+export const cleanupObsoletePositions = (savedPositions, currentNodeIds) => {
   const cleanedPositions = {};
-  const currentIds = new Set(currentTableIds);
+  const currentIds = new Set(currentNodeIds);
   
-  Object.keys(savedPositions).forEach(tableId => {
-    if (currentIds.has(tableId)) {
-      cleanedPositions[tableId] = savedPositions[tableId];
+  Object.keys(savedPositions).forEach(nodeId => {
+    if (currentIds.has(nodeId)) {
+      cleanedPositions[nodeId] = savedPositions[nodeId];
     }
   });
   

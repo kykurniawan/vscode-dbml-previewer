@@ -223,17 +223,30 @@ const analyzeColumnRelationships = (refs, tables) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, onStickyNoteClick = null) => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
 
-  // Collect tables, refs, tableGroups, and enums from all schemas
+  // Collect tables, refs, tableGroups, notes, and enums from all schemas
   const allTables = [];
   const allRefs = [];
   const allTableGroups = [];
+  const allNotes = [];
   const allEnums = {};
   const hasMultipleSchema = dbmlData.schemas.length > 1;
+
+  // First, collect standalone notes from root level (they are not schema-specific)
+  if (dbmlData.notes && dbmlData.notes.length > 0) {
+    const rootNotes = dbmlData.notes.map(note => ({
+      name: note.name,
+      content: note.content,
+      token: note.token,
+      schemaName: 'public', // Default schema for standalone notes
+      fullName: note.name
+    }));
+    allNotes.push(...rootNotes);
+  }
 
   dbmlData.schemas.forEach(schema => {
     if (schema.tables) {
@@ -268,6 +281,16 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
       allTableGroups.push(...tableGroupsWithSchema);
     }
 
+    if (schema.notes) {
+      // Add schema name to each note for identification
+      const notesWithSchema = schema.notes.map(note => ({
+        ...note,
+        schemaName: schema.name || 'public',
+        fullName: hasMultipleSchema && schema.name ? `${schema.name}.${note.name}` : note.name
+      }));
+      allNotes.push(...notesWithSchema);
+    }
+
     // Collect enums from this schema
     if (schema.enums) {
       schema.enums.forEach(enumDef => {
@@ -289,6 +312,7 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
   const tables = allTables;
   const refs = allRefs;
   const tableGroups = allTableGroups;
+  const notes = allNotes;
 
   // Create table-to-group mapping
   const tableToGroupMap = {};
@@ -365,6 +389,20 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
     });
   });
 
+  // Create sticky note nodes
+  notes.forEach((note) => {
+    const stickyNoteNode = {
+      id: `note-${note.fullName}`,
+      type: 'stickyNote',
+      position: { x: 0, y: 0 }, // Will be calculated by layout
+      data: {
+        note,
+        onNoteClick: onStickyNoteClick,
+      },
+    };
+    nodes.push(stickyNoteNode);
+  });
+
   // Create edges for relationships connecting column nodes directly from DBML refs
   const edges = [];
 
@@ -422,13 +460,14 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
 
   // We'll add TableGroup nodes after layout calculation to position them correctly
 
-  // Apply auto-layout using dagre (for table header nodes and table groups)
+  // Apply auto-layout using dagre (for table header nodes, sticky notes, and table groups)
   const layoutedElements = getLayoutedElements(nodes, edges, tableGroups, savedPositions);
 
   return {
     nodes: layoutedElements.nodes,
     edges: layoutedElements.edges,
     tableGroups: layoutedElements.tableGroups,
+    stickyNotes: notes,
   };
 };
 
@@ -446,8 +485,9 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], savedPositions = {}
     ranksep: 100,
   });
 
-  // Only add table header nodes to dagre for layout calculation
+  // Only add table header nodes and sticky notes to dagre for layout calculation
   const tableHeaderNodes = nodes.filter(node => node.type === 'tableHeader');
+  const stickyNoteNodes = nodes.filter(node => node.type === 'stickyNote');
   
   // Separate nodes into those with saved positions and those needing auto-layout
   const nodesWithSavedPositions = [];
@@ -471,6 +511,24 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], savedPositions = {}
       nodesWithSavedPositions.push(tableNode);
     } else {
       nodesNeedingLayout.push(tableNode);
+    }
+  });
+
+  // Handle sticky note dimensions and positions
+  stickyNoteNodes.forEach((noteNode) => {
+    const noteWidth = 200; // Default sticky note width
+    const noteHeight = 120; // Default sticky note height
+
+    tableDimensions[noteNode.id] = {
+      width: noteWidth,
+      height: noteHeight
+    };
+
+    // Check if note has saved position
+    if (savedPositions[noteNode.id]) {
+      nodesWithSavedPositions.push(noteNode);
+    } else {
+      nodesNeedingLayout.push(noteNode);
     }
   });
 
@@ -512,9 +570,32 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], savedPositions = {}
 
   dagre.layout(dagreGraph);
 
-  // Position table header nodes and their child column nodes
+  // Position table header nodes, sticky notes, and their child column nodes
   const layoutedNodes = nodes.map((node) => {
     if (node.type === 'tableHeader') {
+      // Use saved position if available, otherwise use dagre layout
+      if (savedPositions[node.id]) {
+        return {
+          ...node,
+          position: {
+            x: savedPositions[node.id].x,
+            y: savedPositions[node.id].y,
+          },
+        };
+      } else if (nodesNeedingLayoutIds.has(node.id)) {
+        const nodeWithPosition = dagreGraph.node(node.id);
+        const dimensions = tableDimensions[node.id];
+        return {
+          ...node,
+          position: {
+            x: nodeWithPosition.x - dimensions.width / 2,
+            y: nodeWithPosition.y - dimensions.height / 2,
+          },
+        };
+      }
+      // Fallback to original position (shouldn't happen)
+      return node;
+    } else if (node.type === 'stickyNote') {
       // Use saved position if available, otherwise use dagre layout
       if (savedPositions[node.id]) {
         return {
