@@ -86,34 +86,6 @@ const calculateTableWidth = (table, hasMultipleSchema = false) => {
   return Math.max(headerWidth, columnBasedWidth, minWidth);
 };
 
-
-
-/**
- * Resolve table name to full name with schema prefix
- * @param {string} tableName - Table name (may or may not include schema)
- * @param {Array} tables - Array of table objects with fullName property
- * @returns {string} Full table name with schema
- */
-const resolveFullTableName = (tableName, tables) => {
-  // If tableName already contains a dot, it might already be schema.table
-  if (tableName.includes('.')) {
-    // Check if this matches any of our full table names
-    const matchingTable = tables.find(table => table.fullName === tableName);
-    if (matchingTable) {
-      return tableName;
-    }
-  }
-
-  // Look for a table with this name (without schema prefix)
-  const matchingTable = tables.find(table => table.name === tableName);
-  if (matchingTable) {
-    return matchingTable.fullName;
-  }
-
-  // If no match found, assume it's in public schema
-  return tableName;
-};
-
 const mapSourceAndTarget = (ref) => {
   let source;
   let target;
@@ -167,29 +139,39 @@ const findEnumForType = (typeName, enums) => {
  * Analyze column relationships from DBML refs
  * @param {Array} refs - Array of reference objects with proper fieldNames
  * @param {Array} tables - Array of table objects with schema info
+ * @param {Boolean} hasMultipleSchema - Whether there are multiple schemas
  * @returns {Object} Object mapping table names to column handle info
  */
-const analyzeColumnRelationships = (refs, tables) => {
+const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
   const columnHandles = {};
 
 
-  refs.forEach(ref => {
+  refs.forEach((ref, refIndex) => {
     // Use mapSourceAndTarget to properly determine source and target
     const [sourceEndpoint, targetEndpoint] = mapSourceAndTarget(ref);
 
-    // Handle source endpoint - resolve full table name with schema
+    // CRITICAL FIX: Use the schemaName already provided by DBML Core parser
+    // The endpoints already contain the correct schema information!
+    
+    // Handle source endpoint - use schemaName directly from endpoint
+    let sourceFullTableName = null;
+    
     if (sourceEndpoint?.tableName) {
       const tableName = sourceEndpoint.tableName;
-      const fullTableName = resolveFullTableName(tableName, tables);
+      const schemaName = sourceEndpoint.schemaName;
+      
+      // Build full table name directly from endpoint data
+      sourceFullTableName = hasMultipleSchema && schemaName ? `${schemaName}.${tableName}` : tableName;
+      
       const fieldNames = sourceEndpoint.fieldNames || [sourceEndpoint.fieldName];
 
-      if (!columnHandles[fullTableName]) {
-        columnHandles[fullTableName] = {};
+      if (!columnHandles[sourceFullTableName]) {
+        columnHandles[sourceFullTableName] = {};
       }
 
       fieldNames.forEach(fieldName => {
         if (fieldName) {
-          columnHandles[fullTableName][fieldName] = {
+          columnHandles[sourceFullTableName][fieldName] = {
             isSource: true,
             isTarget: false,
             relation: sourceEndpoint.relation
@@ -198,10 +180,13 @@ const analyzeColumnRelationships = (refs, tables) => {
       });
     }
 
-    // Handle target endpoint - resolve full table name with schema
+    // Handle target endpoint - use schemaName directly from endpoint  
     if (targetEndpoint?.tableName) {
       const tableName = targetEndpoint.tableName;
-      const fullTableName = resolveFullTableName(tableName, tables);
+      const schemaName = targetEndpoint.schemaName;
+      
+      // Build full table name directly from endpoint data
+      const fullTableName = hasMultipleSchema && schemaName ? `${schemaName}.${tableName}` : tableName;
       const fieldNames = targetEndpoint.fieldNames || [targetEndpoint.fieldName];
 
       if (!columnHandles[fullTableName]) {
@@ -268,7 +253,12 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
     }
 
     if (schema.refs) {
-      allRefs.push(...schema.refs);
+      // Add schema context to refs for better debugging
+      const refsWithSchema = schema.refs.map(ref => ({
+        ...ref,
+        _schemaContext: schema.name || 'public'
+      }));
+      allRefs.push(...refsWithSchema);
     }
 
     if (schema.tableGroups) {
@@ -327,7 +317,7 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
   });
 
   // Analyze column relationships from DBML refs only
-  const columnHandles = analyzeColumnRelationships(refs, tables);
+  const columnHandles = analyzeColumnRelationships(refs, tables, hasMultipleSchema);
 
   // Create parent-child node structure
   const nodes = [];
@@ -425,9 +415,16 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
         const targetField = targetFieldNames[fieldIndex] || targetFieldNames[0];
 
         if (sourceField && targetField) {
-          const sourceTable = resolveFullTableName(sourceEndpoint.tableName, tables);
-          const targetTable = resolveFullTableName(targetEndpoint.tableName, tables);
-
+          // CRITICAL FIX: Use schemaName directly from endpoints
+          const sourceSchemaName = sourceEndpoint.schemaName;
+          const sourceTableName = sourceEndpoint.tableName;
+          const targetSchemaName = targetEndpoint.schemaName;
+          const targetTableName = targetEndpoint.tableName;
+          
+          // Build full table names directly from endpoint data
+          const sourceTable = hasMultipleSchema && sourceSchemaName ? `${sourceSchemaName}.${sourceTableName}` : sourceTableName;
+          const targetTable = hasMultipleSchema && targetSchemaName ? `${targetSchemaName}.${targetTableName}` : targetTableName;
+          
           // Generate cardinality label using actual endpoint relations
           const sourceRelation = sourceEndpoint.relation || '1';
           const targetRelation = targetEndpoint.relation || '1';

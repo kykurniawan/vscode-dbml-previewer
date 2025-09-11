@@ -6,7 +6,6 @@ const path = require('path');
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
-	console.log('Congratulations, your extension "dbml-previewer" is now active!');
 
 	const previewCommand = vscode.commands.registerCommand('dbml-previewer.preview', function () {
 		const activeEditor = vscode.window.activeTextEditor;
