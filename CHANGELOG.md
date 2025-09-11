@@ -2,6 +2,11 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 0.0.5
+
+### Fixed
+- **Relationship For Same Table Name With Different Schema**: Fixed issue where relationships were not properly drawn for tables with the same name but in different schemas
+
 ## 0.0.4
 
 ### Added

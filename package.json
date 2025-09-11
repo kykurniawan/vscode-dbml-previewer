@@ -2,7 +2,7 @@
   "name": "dbml-previewer",
   "displayName": "DBML Previewer",
   "description": "Transform DBML files into interactive visual database diagrams with drag-and-drop tables, relationship tooltips, multi-schema support, and real-time preview updates",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "rizkykurniawan",
   "author": {
     "name": "Rizky Kurniawan",
