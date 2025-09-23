@@ -81,9 +81,10 @@ function createPreviewPanel(context, filePath, content) {
 	// Get configuration
 	const config = vscode.workspace.getConfiguration('diagram');
 	const inheritThemeStyle = config.get('inheritThemeStyle', true);
+	const edgeType = config.get('edgeType', 'smoothstep');
 
 	// Set the webview content
-	panel.webview.html = getWebviewContent(content, fileName, filePath, panel.webview, inheritThemeStyle);
+	panel.webview.html = getWebviewContent(content, fileName, filePath, panel.webview, inheritThemeStyle, edgeType);
 
 	// Handle messages from the webview
 	panel.webview.onDidReceiveMessage(
@@ -96,9 +97,11 @@ function createPreviewPanel(context, filePath, content) {
 					// Send current configuration to webview
 					const currentConfig = vscode.workspace.getConfiguration('diagram');
 					const currentInheritThemeStyle = currentConfig.get('inheritThemeStyle', true);
+					const currentEdgeType = currentConfig.get('edgeType', 'smoothstep');
 					panel.webview.postMessage({
 						type: 'configuration',
-						inheritThemeStyle: currentInheritThemeStyle
+						inheritThemeStyle: currentInheritThemeStyle,
+						edgeType: currentEdgeType
 					});
 					break;
 			}
@@ -109,12 +112,14 @@ function createPreviewPanel(context, filePath, content) {
 
 	// Listen for configuration changes
 	const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
-		if (event.affectsConfiguration('diagram.inheritThemeStyle')) {
+		if (event.affectsConfiguration('diagram.inheritThemeStyle') || event.affectsConfiguration('diagram.edgeType')) {
 			const config = vscode.workspace.getConfiguration('diagram');
 			const inheritThemeStyle = config.get('inheritThemeStyle', true);
+			const edgeType = config.get('edgeType', 'smoothstep');
 			panel.webview.postMessage({
 				type: 'configurationChanged',
-				inheritThemeStyle: inheritThemeStyle
+				inheritThemeStyle: inheritThemeStyle,
+				edgeType: edgeType
 			});
 		}
 	});
@@ -150,9 +155,10 @@ function createPreviewPanel(context, filePath, content) {
  * @param {string} filePath
  * @param {vscode.Webview} webview
  * @param {boolean} inheritThemeStyle
+ * @param {string} edgeType
  * @returns {string}
  */
-function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle) {
+function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType) {
 	// Get the local path to main script run in the webview
 	const scriptPathOnDisk = vscode.Uri.file(path.join(__dirname, 'dist', 'webview.js'));
 	const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -186,6 +192,7 @@ function getWebviewContent(content, fileName, filePath, webview, inheritThemeSty
 			window.initialContent = ${JSON.stringify(content)};
 			window.filePath = ${JSON.stringify(filePath)};
 			window.inheritThemeStyle = ${JSON.stringify(inheritThemeStyle)};
+			window.edgeType = ${JSON.stringify(edgeType)};
 		</script>
 		<script src="${scriptUri}"></script>
 	</body>

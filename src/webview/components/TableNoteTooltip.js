@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { getThemeVar } from '../styles/themeManager.js';
 
 const TableNoteTooltip = ({ table, position, onClose }) => {
   const tooltipRef = useRef(null);
@@ -35,16 +36,16 @@ const TableNoteTooltip = ({ table, position, onClose }) => {
     left: Math.min(position.x, window.innerWidth - 320), // 320px is tooltip width
     top: Math.min(position.y, window.innerHeight - 150), // Estimate tooltip height
     zIndex: 1000,
-    background: 'var(--vscode-editor-background)',
-    border: '1px solid var(--vscode-panel-border)',
+    background: getThemeVar('editorBackground'),
+    border: `1px solid ${getThemeVar('panelBorder')}`,
     borderRadius: '6px',
     padding: '12px',
     minWidth: '280px',
     maxWidth: '320px',
     fontSize: '12px',
-    color: 'var(--vscode-editor-foreground)',
+    color: getThemeVar('foreground'),
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    fontFamily: 'var(--vscode-font-family)'
+    fontFamily: getThemeVar('fontFamily')
   };
 
   return (
@@ -55,7 +56,7 @@ const TableNoteTooltip = ({ table, position, onClose }) => {
         alignItems: 'center', 
         gap: '8px', 
         marginBottom: '12px',
-        borderBottom: '1px solid var(--vscode-panel-border)',
+        borderBottom: `1px solid ${getThemeVar('panelBorder')}`,
         paddingBottom: '8px'
       }}>
         <span style={{ fontSize: '14px' }}>
@@ -64,7 +65,7 @@ const TableNoteTooltip = ({ table, position, onClose }) => {
         <span style={{ 
           fontWeight: 'bold', 
           fontSize: '14px',
-          color: 'var(--vscode-editor-foreground)'
+          color: getThemeVar('foreground')
         }}>
           {table.name}
         </span>
@@ -74,7 +75,7 @@ const TableNoteTooltip = ({ table, position, onClose }) => {
             marginLeft: 'auto',
             background: 'none',
             border: 'none',
-            color: 'var(--vscode-icon-foreground)',
+            color: getThemeVar('iconForeground'),
             cursor: 'pointer',
             fontSize: '16px',
             padding: '2px',
@@ -88,21 +89,21 @@ const TableNoteTooltip = ({ table, position, onClose }) => {
 
       {/* Note content */}
       <div style={{ 
-        color: 'var(--vscode-descriptionForeground)',
+        color: getThemeVar('descriptionForeground'),
         fontWeight: '500',
         marginBottom: '8px'
       }}>
         Note:
       </div>
       <div style={{ 
-        backgroundColor: 'var(--vscode-textCodeBlock-background)',
-        border: '1px solid var(--vscode-panel-border)',
+        backgroundColor: getThemeVar('textCodeBlockBackground'),
+        border: `1px solid ${getThemeVar('panelBorder')}`,
         borderRadius: '4px',
         padding: '8px',
         maxHeight: '200px',
         overflowY: 'auto',
         fontStyle: 'italic',
-        color: 'var(--vscode-editor-foreground)',
+        color: getThemeVar('foreground'),
         lineHeight: '1.4',
         whiteSpace: 'pre-wrap'
       }}>

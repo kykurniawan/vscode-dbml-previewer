@@ -95,6 +95,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [, setFilePath] = useState(null);
   const [currentTheme, setCurrentTheme] = useState({});
   const [inheritThemeStyle, setInheritThemeStyle] = useState(true);
+  const [edgeType, setEdgeType] = useState('smoothstep');
 
 
   // Disabled manual connections for preview-only mode
@@ -309,13 +310,13 @@ const DBMLPreview = ({ initialContent }) => {
       saveLayout(fileId, {});
       // Trigger re-transform with empty positions
       if (dbmlData) {
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, edgeType);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
       }
     }
-  }, [fileId, dbmlData, setNodes, setEdges, handleColumnClick, handleTableNoteClick]);
+  }, [fileId, dbmlData, edgeType, setNodes, setEdges, handleColumnClick, handleTableNoteClick]);
 
   // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
@@ -489,8 +490,12 @@ const DBMLPreview = ({ initialContent }) => {
     const initialInheritThemeStyle = window.inheritThemeStyle !== undefined
       ? window.inheritThemeStyle
       : true;
+    const initialEdgeType = window.edgeType !== undefined
+      ? window.edgeType
+      : 'smoothstep';
 
     setInheritThemeStyle(initialInheritThemeStyle);
+    setEdgeType(initialEdgeType);
 
     // Initialize theme manager
     themeManager.initialize(initialInheritThemeStyle);
@@ -533,12 +538,18 @@ const DBMLPreview = ({ initialContent }) => {
             setInheritThemeStyle(message.inheritThemeStyle);
             themeManager.setInheritThemeStyle(message.inheritThemeStyle);
           }
+          if (message.edgeType !== undefined) {
+            setEdgeType(message.edgeType);
+          }
           break;
         case 'configurationChanged':
           // Handle configuration changes
           if (message.inheritThemeStyle !== undefined) {
             setInheritThemeStyle(message.inheritThemeStyle);
             themeManager.setInheritThemeStyle(message.inheritThemeStyle);
+          }
+          if (message.edgeType !== undefined) {
+            setEdgeType(message.edgeType);
           }
           break;
       }
@@ -555,7 +566,7 @@ const DBMLPreview = ({ initialContent }) => {
     };
   }, []);
 
-  // Transform DBML data to nodes and edges when data changes
+  // Transform DBML data to nodes and edges when data changes or edge type changes
   useEffect(() => {
     if (dbmlData && fileId !== null) {
       try {
@@ -588,7 +599,7 @@ const DBMLPreview = ({ initialContent }) => {
           saveLayout(fileId, cleanedPositions);
         }
 
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick, edgeType);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
@@ -596,7 +607,7 @@ const DBMLPreview = ({ initialContent }) => {
         console.error('Error transforming DBML data:', error);
       }
     }
-  }, [dbmlData, fileId, setNodes, setEdges]);
+  }, [dbmlData, fileId, edgeType, setNodes, setEdges]);
 
   // Update edge styles based on selection state
   useEffect(() => {
