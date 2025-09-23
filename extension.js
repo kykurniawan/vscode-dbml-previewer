@@ -60,9 +60,9 @@ function readFileAndPreview(context, filePath) {
 
 /**
  * Create and show the webview panel for preview
- * @param {vscode.ExtensionContext} context 
- * @param {string} filePath 
- * @param {string} content 
+ * @param {vscode.ExtensionContext} context
+ * @param {string} filePath
+ * @param {string} content
  */
 function createPreviewPanel(context, filePath, content) {
 	const fileName = path.basename(filePath);
@@ -78,21 +78,48 @@ function createPreviewPanel(context, filePath, content) {
 		}
 	);
 
-	// Set the webview content
-	panel.webview.html = getWebviewContent(content, fileName, filePath, panel.webview);
+	// Get configuration
+	const config = vscode.workspace.getConfiguration('diagram');
+	const inheritThemeStyle = config.get('inheritThemeStyle', true);
 
-	// Handle messages from the webview (optional)
+	// Set the webview content
+	panel.webview.html = getWebviewContent(content, fileName, filePath, panel.webview, inheritThemeStyle);
+
+	// Handle messages from the webview
 	panel.webview.onDidReceiveMessage(
 		message => {
 			switch (message.command) {
 				case 'export':
 					vscode.window.showWarningMessage('Exporting DBML is not yet supported');
 					break;
+				case 'getConfiguration':
+					// Send current configuration to webview
+					const currentConfig = vscode.workspace.getConfiguration('diagram');
+					const currentInheritThemeStyle = currentConfig.get('inheritThemeStyle', true);
+					panel.webview.postMessage({
+						type: 'configuration',
+						inheritThemeStyle: currentInheritThemeStyle
+					});
+					break;
 			}
 		},
 		undefined,
 		context.subscriptions
 	);
+
+	// Listen for configuration changes
+	const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
+		if (event.affectsConfiguration('diagram.inheritThemeStyle')) {
+			const config = vscode.workspace.getConfiguration('diagram');
+			const inheritThemeStyle = config.get('inheritThemeStyle', true);
+			panel.webview.postMessage({
+				type: 'configurationChanged',
+				inheritThemeStyle: inheritThemeStyle
+			});
+		}
+	});
+
+	context.subscriptions.push(configChangeListener);
 
 	// Auto-refresh when file changes (optional)
 	const fileWatcher = vscode.workspace.createFileSystemWatcher(filePath);
@@ -118,13 +145,14 @@ function createPreviewPanel(context, filePath, content) {
 
 /**
  * Generate HTML content for the webview
- * @param {string} content 
- * @param {string} fileName 
+ * @param {string} content
+ * @param {string} fileName
  * @param {string} filePath
  * @param {vscode.Webview} webview
+ * @param {boolean} inheritThemeStyle
  * @returns {string}
  */
-function getWebviewContent(content, fileName, filePath, webview) {
+function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle) {
 	// Get the local path to main script run in the webview
 	const scriptPathOnDisk = vscode.Uri.file(path.join(__dirname, 'dist', 'webview.js'));
 	const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -139,9 +167,9 @@ function getWebviewContent(content, fileName, filePath, webview) {
 			body {
 				margin: 0;
 				padding: 0;
-				font-family: var(--vscode-font-family);
-				background-color: var(--vscode-editor-background);
-				color: var(--vscode-editor-foreground);
+				font-family: ${inheritThemeStyle ? 'var(--vscode-font-family)' : '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'};
+				background-color: ${inheritThemeStyle ? 'var(--vscode-editor-background)' : '#ffffff'};
+				color: ${inheritThemeStyle ? 'var(--vscode-editor-foreground)' : '#1f2937'};
 			}
 			#root {
 				width: 100vw;
@@ -157,6 +185,7 @@ function getWebviewContent(content, fileName, filePath, webview) {
 		<script>
 			window.initialContent = ${JSON.stringify(content)};
 			window.filePath = ${JSON.stringify(filePath)};
+			window.inheritThemeStyle = ${JSON.stringify(inheritThemeStyle)};
 		</script>
 		<script src="${scriptUri}"></script>
 	</body>

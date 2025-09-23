@@ -1,4 +1,5 @@
 import dagre from 'dagre';
+import { getThemeVar } from '../styles/themeManager.js';
 
 /**
  * Calculate the width needed for a column based on its content
@@ -441,7 +442,7 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
             animated: false,
             selectable: true,
             style: {
-              stroke: 'var(--vscode-charts-lines)',
+              stroke: getThemeVar('chartsLines'),
               strokeWidth: 2,
               strokeDasharray: '0',
             },

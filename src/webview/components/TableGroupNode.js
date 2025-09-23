@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getThemeVar } from '../styles/themeManager.js';
 
 const TableGroupNode = ({ data, selected }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -14,11 +15,11 @@ const TableGroupNode = ({ data, selected }) => {
     width: '100%',
     height: '100%',
     backgroundColor: selected
-      ? 'color-mix(in srgb, var(--vscode-button-background) 20%, transparent)'
+      ? `color-mix(in srgb, ${getThemeVar('buttonBackground')} 20%, transparent)`
       : isHovered
-        ? 'color-mix(in srgb, var(--vscode-button-background) 15%, transparent)'
-        : 'color-mix(in srgb, var(--vscode-button-background) 10%, transparent)',
-    border: '2px solid var(--vscode-button-background)',
+        ? `color-mix(in srgb, ${getThemeVar('buttonBackground')} 15%, transparent)`
+        : `color-mix(in srgb, ${getThemeVar('buttonBackground')} 10%, transparent)`,
+    border: `2px solid ${getThemeVar('buttonBackground')}`,
     borderRadius: '8px',
     zIndex: -1,
     transition: 'all 0.2s ease-in-out',
@@ -31,10 +32,10 @@ const TableGroupNode = ({ data, selected }) => {
     top: '0',
     left: '0',
     transform: 'translate(0, -120%)',
-    backgroundColor: 'var(--vscode-button-background)',
-    color: 'var(--vscode-button-foreground)',
+    backgroundColor: getThemeVar('buttonBackground'),
+    color: getThemeVar('buttonForeground'),
     padding: '16px 12px',
-    border: '2px solid var(--vscode-button-background)',
+    border: `2px solid ${getThemeVar('buttonBackground')}`,
     fontSize: '14px',
     fontWeight: 'bold',
     borderRadius: '8px',
@@ -44,7 +45,7 @@ const TableGroupNode = ({ data, selected }) => {
 
   const noteStyle = {
     boxSizing: 'border-box',
-    color: 'var(--vscode-button-foreground)',
+    color: getThemeVar('buttonForeground'),
     marginTop: '10px',
     fontSize: '9px',
     fontStyle: 'italic',

@@ -3,6 +3,7 @@ import {
   ReactFlow,
   Controls,
   Background,
+  BackgroundVariant,
   useNodesState,
   useEdgesState,
   Panel,
@@ -10,6 +11,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import themeManager, { getThemeVar } from '../styles/themeManager.js';
 import { Parser } from '@dbml/core';
 import TableNode from './TableNode';
 import TableHeaderNode from './TableHeaderNode';
@@ -91,6 +93,8 @@ const DBMLPreview = ({ initialContent }) => {
   const [fileId, setFileId] = useState(null);
   const [savedPositions, setSavedPositions] = useState({});
   const [, setFilePath] = useState(null);
+  const [currentTheme, setCurrentTheme] = useState({});
+  const [inheritThemeStyle, setInheritThemeStyle] = useState(true);
 
 
   // Disabled manual connections for preview-only mode
@@ -479,6 +483,32 @@ const DBMLPreview = ({ initialContent }) => {
     }
   }, []);
 
+  // Initialize theme system
+  useEffect(() => {
+    // Get initial configuration from window global
+    const initialInheritThemeStyle = window.inheritThemeStyle !== undefined
+      ? window.inheritThemeStyle
+      : true;
+
+    setInheritThemeStyle(initialInheritThemeStyle);
+
+    // Initialize theme manager
+    themeManager.initialize(initialInheritThemeStyle);
+    setCurrentTheme(themeManager.getTheme());
+
+    // Listen for theme changes
+    const handleThemeChange = (newTheme) => {
+      setCurrentTheme(newTheme);
+    };
+
+    themeManager.addListener(handleThemeChange);
+
+    // Cleanup
+    return () => {
+      themeManager.removeListener(handleThemeChange);
+    };
+  }, []);
+
   // Parse initial content
   useEffect(() => {
     if (dbmlContent) {
@@ -497,13 +527,28 @@ const DBMLPreview = ({ initialContent }) => {
         case 'updateContent':
           setDbmlContent(message.content || '');
           break;
+        case 'configuration':
+          // Handle initial configuration response
+          if (message.inheritThemeStyle !== undefined) {
+            setInheritThemeStyle(message.inheritThemeStyle);
+            themeManager.setInheritThemeStyle(message.inheritThemeStyle);
+          }
+          break;
+        case 'configurationChanged':
+          // Handle configuration changes
+          if (message.inheritThemeStyle !== undefined) {
+            setInheritThemeStyle(message.inheritThemeStyle);
+            themeManager.setInheritThemeStyle(message.inheritThemeStyle);
+          }
+          break;
       }
     };
 
     window.addEventListener('message', messageListener);
 
-    // Request initial data
+    // Request initial data and configuration
     vscode.postMessage({ type: 'ready' });
+    vscode.postMessage({ command: 'getConfiguration' });
 
     return () => {
       window.removeEventListener('message', messageListener);
@@ -564,7 +609,7 @@ const DBMLPreview = ({ initialContent }) => {
         const currentDashArray = edge.style?.strokeDasharray;
         const currentAnimated = edge.animated;
 
-        const expectedStroke = isSelected ? 'var(--vscode-focusBorder)' : 'var(--vscode-charts-lines)';
+        const expectedStroke = isSelected ? getThemeVar('focusBorder') : getThemeVar('chartsLines');
         const expectedStrokeWidth = isSelected ? 3 : 2;
         const expectedDashArray = isSelected ? '5 5' : '0';
         const expectedAnimated = isSelected;
@@ -615,7 +660,7 @@ const DBMLPreview = ({ initialContent }) => {
         justifyContent: 'center'
       }}>
         <div style={{
-          color: 'var(--vscode-editor-foreground)',
+          color: getThemeVar('foreground'),
           fontSize: '16px'
         }}>
           ⏳ Parsing DBML...
@@ -643,13 +688,13 @@ const DBMLPreview = ({ initialContent }) => {
         gap: '8px'
       }}>
         <div style={{
-          color: 'var(--vscode-descriptionForeground)',
+          color: getThemeVar('descriptionForeground'),
           fontSize: '16px'
         }}>
           📄 No tables found in DBML
         </div>
         <div style={{
-          color: 'var(--vscode-descriptionForeground)',
+          color: getThemeVar('descriptionForeground'),
           fontSize: '12px',
           textAlign: 'center'
         }}>
@@ -678,18 +723,26 @@ const DBMLPreview = ({ initialContent }) => {
         maxZoom={2}
       >
         <Controls />
-        <Background />
+        <Background
+          variant={BackgroundVariant.Dots}
+          color={getThemeVar('panelBorder')}
+          size={1}
+          gap={20}
+          style={{
+            backgroundColor: getThemeVar('background')
+          }}
+        />
         <MiniMap
           nodeStrokeWidth={2}
-          nodeColor="var(--vscode-button-background)"
-          nodeStrokeColor="var(--vscode-panel-border)"
-          bgColor="var(--vscode-panel-background)"
+          nodeColor={getThemeVar('buttonBackground')}
+          nodeStrokeColor={getThemeVar('panelBorder')}
+          bgColor={getThemeVar('panelBackground')}
           maskColor="rgba(0, 0, 0, 0.1)"
-          maskStrokeColor="var(--vscode-panel-border)"
+          maskStrokeColor={getThemeVar('panelBorder')}
           position="bottom-right"
           pannable={true}
           style={{
-            border: '1px solid var(--vscode-panel-border)',
+            border: `1px solid ${getThemeVar('panelBorder')}`,
             borderRadius: '4px'
           }}
         />
@@ -699,11 +752,11 @@ const DBMLPreview = ({ initialContent }) => {
         {/* Stats Panel - Top Right */}
         <Panel position="top-right">
           <div style={{
-            background: 'var(--vscode-editor-background)',
-            color: 'var(--vscode-editor-foreground)',
+            background: getThemeVar('background'),
+            color: getThemeVar('foreground'),
             padding: '8px',
             borderRadius: '4px',
-            border: '1px solid var(--vscode-panel-border)',
+            border: `1px solid ${getThemeVar('panelBorder')}`,
             display: 'flex',
             flexDirection: 'column',
             gap: '5px'
@@ -715,15 +768,15 @@ const DBMLPreview = ({ initialContent }) => {
             <div style={{ fontSize: '12px' }}>
               {totalRefs} relationships
             </div>
-            <div style={{ fontSize: '10px', color: 'var(--vscode-descriptionForeground)' }}>
+            <div style={{ fontSize: '10px', color: getThemeVar('descriptionForeground') }}>
               {dbmlData?.schemas?.length || 0} schema{(dbmlData?.schemas?.length || 0) !== 1 ? 's' : ''}
             </div>
             <button
               onClick={resetLayout}
               style={{
-                background: 'var(--vscode-button-secondaryBackground)',
-                color: 'var(--vscode-button-secondaryForeground)',
-                border: '1px solid var(--vscode-button-border)',
+                background: getThemeVar('buttonSecondaryBackground'),
+                color: getThemeVar('buttonSecondaryForeground'),
+                border: `1px solid ${getThemeVar('buttonBorder')}`,
                 padding: '4px 8px',
                 borderRadius: '2px',
                 fontSize: '10px',

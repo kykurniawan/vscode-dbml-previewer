@@ -114,7 +114,17 @@
         ],
         "configuration": "./language-configuration.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "DBML Previewer",
+      "properties": {
+        "diagram.inheritThemeStyle": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to inherit styling from the current VS Code theme. When disabled, uses a clean light theme optimized for diagram readability."
+        }
+      }
+    }
   },
   "scripts": {
     "lint": "eslint .",

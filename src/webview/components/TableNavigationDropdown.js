@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { getThemeVar } from '../styles/themeManager.js';
 
 const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,8 +18,8 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
       if (part.toLowerCase() === query.toLowerCase()) {
         return (
           <span key={index} style={{ 
-            backgroundColor: 'var(--vscode-editor-findMatchHighlightBackground)',
-            color: 'var(--vscode-editor-foreground)',
+            backgroundColor: getThemeVar('editorFindMatchHighlightBackground'),
+            color: getThemeVar('foreground'),
             fontWeight: 'bold'
           }}>
             {part}
@@ -195,9 +196,9 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
         onKeyDown={handleKeyDown}
         style={{
           width: '100%',
-          background: 'var(--vscode-input-background)',
-          color: 'var(--vscode-input-foreground)',
-          border: '1px solid var(--vscode-input-border)',
+          background: getThemeVar('inputBackground'),
+          color: getThemeVar('inputForeground'),
+          border: `1px solid ${getThemeVar('inputBorder')}`,
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
           borderRadius: '2px',
           padding: '6px 8px',
@@ -236,8 +237,8 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
             top: '100%',
             left: 0,
             right: 0,
-            background: 'var(--vscode-dropdown-background)',
-            border: '1px solid var(--vscode-dropdown-border)',
+            background: getThemeVar('dropdownBackground'),
+            border: `1px solid ${getThemeVar('dropdownBorder')}`,
             borderTop: 'none',
             borderRadius: '0 0 2px 2px',
             maxHeight: '320px',
@@ -250,8 +251,8 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
           <div style={{
             position: 'sticky',
             top: 0,
-            background: 'var(--vscode-dropdown-background)',
-            borderBottom: '1px solid var(--vscode-dropdown-border)',
+            background: getThemeVar('dropdownBackground'),
+            borderBottom: `1px solid ${getThemeVar('dropdownBorder')}`,
             padding: '8px',
             zIndex: 1002
           }}>
@@ -264,19 +265,19 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
               onKeyDown={handleSearchKeyDown}
               style={{
                 width: '100%',
-                background: 'var(--vscode-input-background)',
-                color: 'var(--vscode-input-foreground)',
-                border: '1px solid var(--vscode-input-border)',
+                background: getThemeVar('inputBackground'),
+                color: getThemeVar('inputForeground'),
+                border: `1px solid ${getThemeVar('inputBorder')}`,
                 borderRadius: '2px',
                 padding: '4px 8px',
                 fontSize: '12px',
                 outline: 'none'
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = 'var(--vscode-focusBorder)';
+                e.target.style.borderColor = getThemeVar('focusBorder');
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = 'var(--vscode-input-border)';
+                e.target.style.borderColor = getThemeVar('inputBorder');
               }}
             />
           </div>
@@ -287,9 +288,9 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
               padding: '4px 8px',
               fontSize: '10px',
               zIndex: 1000,
-              color: 'var(--vscode-descriptionForeground)',
-              borderBottom: '1px solid var(--vscode-dropdown-border)',
-              background: 'var(--vscode-list-inactiveSelectionBackground)'
+              color: getThemeVar('descriptionForeground'),
+              borderBottom: `1px solid ${getThemeVar('dropdownBorder')}`,
+              background: getThemeVar('listInactiveSelectionBackground')
             }}>
               {filteredTableOptions.filter(opt => opt.type === 'table').length} results
             </div>
@@ -300,7 +301,7 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
             <div style={{
               padding: '12px',
               textAlign: 'center',
-              color: 'var(--vscode-descriptionForeground)',
+              color: getThemeVar('descriptionForeground'),
               fontSize: '12px',
               fontStyle: 'italic'
             }}>
@@ -316,9 +317,9 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
                     padding: '4px 8px',
                     fontSize: '10px',
                     fontWeight: 'bold',
-                    color: 'var(--vscode-descriptionForeground)',
-                    backgroundColor: 'var(--vscode-list-inactiveSelectionBackground)',
-                    borderBottom: '1px solid var(--vscode-list-inactiveSelectionBackground)',
+                    color: getThemeVar('descriptionForeground'),
+                    backgroundColor: getThemeVar('listInactiveSelectionBackground'),
+                    borderBottom: `1px solid ${getThemeVar('listInactiveSelectionBackground')}`,
                     textTransform: 'uppercase'
                   }}
                 >
@@ -334,7 +335,7 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
                 style={{
                   width: '100%',
                   background: 'transparent',
-                  color: 'var(--vscode-dropdown-foreground)',
+                  color: getThemeVar('dropdownForeground'),
                   border: 'none',
                   padding: '6px 12px',
                   fontSize: '12px',
@@ -345,7 +346,7 @@ const TableNavigationDropdown = ({ dbmlData, onTableSelect }) => {
                   transition: 'background-color 0.15s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = 'var(--vscode-list-hoverBackground)';
+                  e.target.style.backgroundColor = getThemeVar('listHoverBackground');
                 }}
                 onMouseLeave={(e) => {
                   e.target.style.backgroundColor = 'transparent';
