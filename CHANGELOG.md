@@ -2,6 +2,37 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 1.0.0
+
+### Added
+- **Theme Configuration**: New `diagram.inheritThemeStyle` setting to control VS Code theme inheritance (default: false)
+- **Edge Type Configuration**: New `diagram.edgeType` setting with 4 edge types: straight, step, smoothstep, and bezier (default: smoothstep)
+- **Centralized Theme System**: Complete theme management system with light theme optimized for diagram readability
+- **Real-time Configuration Updates**: Theme and edge type changes apply immediately without extension restart
+
+### Improved
+- **Theme Independence**: Clean light theme used by default instead of VS Code theme to prevent styling issues with poorly designed themes
+- **Visual Consistency**: All components (tooltips, dropdowns, backgrounds) now use centralized theming
+- **Edge Customization**: Users can choose from 4 React Flow edge types for different visual preferences
+- **Configuration Experience**: Comprehensive settings with detailed descriptions and enum options
+
+### Technical
+- Added `src/webview/styles/themeManager.js` - Core theme management system
+- Added `src/webview/styles/defaultTheme.js` - Clean light theme definition
+- Added `src/webview/styles/vscodeTheme.js` - VS Code theme variable mapping
+- Updated all components to use `getThemeVar()` helper function for centralized theming
+- Enhanced `extension.js` to handle configuration changes and pass settings to webview
+- Updated `package.json` with new configuration options and detailed descriptions
+
+### Configuration Options
+- **Theme Inheritance** (`diagram.inheritThemeStyle`):
+  - Type: boolean (default: false)
+  - Description: Whether to inherit styling from VS Code theme or use clean light theme
+- **Edge Type** (`diagram.edgeType`):
+  - Type: enum (default: "smoothstep")
+  - Options: straight, step, smoothstep, bezier
+  - Description: Visual style for table relationship connections
+
 ## 0.0.5
 
 ### Fixed
