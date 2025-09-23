@@ -1,4 +1,5 @@
 import dagre from 'dagre';
+import { getThemeVar } from '../styles/themeManager.js';
 
 /**
  * Calculate the width needed for a column based on its content
@@ -208,7 +209,7 @@ const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, edgeType = 'smoothstep') => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
@@ -437,11 +438,11 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
             target: `${targetTable}.${targetField}`,
             sourceHandle: 'source',
             targetHandle: 'target',
-            type: 'smoothstep',
+            type: edgeType,
             animated: false,
             selectable: true,
             style: {
-              stroke: 'var(--vscode-charts-lines)',
+              stroke: getThemeVar('chartsLines'),
               strokeWidth: 2,
               strokeDasharray: '0',
             },

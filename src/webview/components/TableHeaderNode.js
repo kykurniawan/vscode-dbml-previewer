@@ -1,4 +1,5 @@
 import React from 'react';
+import { getThemeVar } from '../styles/themeManager.js';
 
 const TableHeaderNode = ({ data }) => {
   const { table, columnCount = 0, tableWidth = 200, hasMultipleSchema = false, onTableNoteClick } = data;
@@ -15,7 +16,7 @@ const TableHeaderNode = ({ data }) => {
 
   return (
     <div style={{
-      background: 'var(--vscode-editor-background)',
+      background: getThemeVar('editorBackground'),
       borderRadius: '8px',
       minWidth: `${tableWidth}px`,
       width: `${tableWidth}px`,
@@ -25,11 +26,11 @@ const TableHeaderNode = ({ data }) => {
     }}>
       {/* Table Header */}
       <div style={{
-        borderTop: '2px solid var(--vscode-panel-border)',
-        borderLeft: '2px solid var(--vscode-panel-border)',
-        borderRight: '2px solid var(--vscode-panel-border)',
-        background: 'var(--vscode-button-background)',
-        color: 'var(--vscode-button-foreground)',
+        borderTop: `2px solid ${getThemeVar('panelBorder')}`,
+        borderLeft: `2px solid ${getThemeVar('panelBorder')}`,
+        borderRight: `2px solid ${getThemeVar('panelBorder')}`,
+        background: getThemeVar('buttonBackground'),
+        color: getThemeVar('buttonForeground'),
         padding: '8px 12px',
         fontWeight: 'bold',
         fontSize: '14px',
@@ -56,7 +57,7 @@ const TableHeaderNode = ({ data }) => {
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--vscode-button-foreground)',
+              color: getThemeVar('buttonForeground'),
               cursor: 'pointer',
               fontSize: '12px',
               padding: '2px 4px',
@@ -75,12 +76,12 @@ const TableHeaderNode = ({ data }) => {
       {columnCount > 0 && (
         <div style={{
           padding: `${tablePadding}px`,
-          borderTop: '1px solid var(--vscode-panel-border)',
-          borderLeft: '2px solid var(--vscode-panel-border)',
-          borderRight: '2px solid var(--vscode-panel-border)',
-          borderBottom: '2px solid var(--vscode-panel-border)',
+          borderTop: `1px solid ${getThemeVar('panelBorder')}`,
+          borderLeft: `2px solid ${getThemeVar('panelBorder')}`,
+          borderRight: `2px solid ${getThemeVar('panelBorder')}`,
+          borderBottom: `2px solid ${getThemeVar('panelBorder')}`,
           borderRadius: '0 0 8px 8px',
-          background: 'var(--vscode-editor-background)',
+          background: getThemeVar('editorBackground'),
           height: `${columnCount * columnHeight + (tablePadding * 2)}px`,
           boxSizing: 'border-box'
         }}>

@@ -13,7 +13,13 @@ Perfect for database architects, developers, and anyone working with database sc
 
 ## 🌟 What's New
 
-### Latest Updates
+### v1.0.0 - Major Configuration Release
+- ⚙️ **Theme Configuration**: Choose between VS Code theme inheritance or clean light theme (default: light)
+- 🔗 **Edge Type Options**: 4 relationship line styles - straight, step, smoothstep, and bezier
+- 🎨 **Centralized Theming**: All components now use consistent, reliable styling
+- ⚡ **Real-time Updates**: Configuration changes apply instantly without restart
+
+### Previous Updates
 - 📝 **Smart Table Notes**: Click note icons to view table notes in clean popup tooltips
 - 🎯 **Enhanced UX**: No more broken layouts with long table notes
 - 🔄 **Improved Performance**: Optimized rendering and interaction handling
@@ -39,9 +45,9 @@ Perfect for database architects, developers, and anyone working with database sc
 ✅ **Full DBML Specification** - Complete support for all DBML features  
 
 ### 🎨 **Seamless VS Code Integration**
-✅ **Native Theming** - Automatically matches your VS Code theme  
-✅ **Multiple Access Points** - Command palette, context menu, keyboard shortcuts  
-✅ **Side-by-Side Editing** - Preview alongside your DBML file  
+✅ **Flexible Theming** - Choose VS Code theme inheritance or clean light theme
+✅ **Multiple Access Points** - Command palette, context menu, keyboard shortcuts
+✅ **Side-by-Side Editing** - Preview alongside your DBML file
 ✅ **Quick Access** - `Ctrl+Shift+D` / `Cmd+Shift+D` keyboard shortcut  
 
 ## 🚀 Get Started in 30 Seconds
@@ -139,12 +145,33 @@ This extension supports the full DBML specification including:
 
 ## ⚙️ Configuration
 
-The extension works out of the box with sensible defaults. Future versions will include:
+The extension works out of the box with sensible defaults and includes the following configuration options:
 
-- Custom theme colors
-- Layout algorithm options
-- Export settings
-- Performance optimizations
+### Theme Configuration
+- **`diagram.inheritThemeStyle`** (boolean, default: `false`)
+  - Controls whether diagrams inherit VS Code theme styling
+  - When disabled, uses a clean light theme optimized for diagram readability
+  - Prevents issues with poorly designed VS Code themes
+
+### Edge Type Configuration
+- **`diagram.edgeType`** (string, default: `"smoothstep"`)
+  - Customizes the visual style of relationship connections
+  - Available options:
+    - `"straight"` - Direct straight lines between tables
+    - `"step"` - Step-style edges with right angles
+    - `"smoothstep"` - Smooth step edges with rounded corners (recommended)
+    - `"bezier"` - Curved bezier edges for organic appearance
+
+### How to Configure
+1. Open VS Code Settings (`Ctrl+,` / `Cmd+,`)
+2. Search for "diagram" or "DBML Previewer"
+3. Adjust settings to your preference
+4. Changes apply immediately without restart
+
+### Future Configuration Options
+- Export settings and formats
+- Performance optimization toggles
+- Advanced layout algorithm options
 
 ## 🛠️ Development & Contributing
 

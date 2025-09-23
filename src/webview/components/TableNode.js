@@ -1,5 +1,6 @@
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { getThemeVar } from '../styles/themeManager.js';
 
 const TableNode = ({ data }) => {
   const { table, columnHandles = {}, onTableNoteClick } = data;
@@ -25,8 +26,8 @@ const TableNode = ({ data }) => {
 
   return (
     <div style={{
-      background: 'var(--vscode-editor-background)',
-      border: '2px solid var(--vscode-panel-border)',
+      background: getThemeVar('editorBackground'),
+      border: `2px solid ${getThemeVar('panelBorder')}`,
       borderRadius: '8px',
       minWidth: '200px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -35,13 +36,13 @@ const TableNode = ({ data }) => {
     }}>
       {/* Table Header */}
       <div style={{
-        background: 'var(--vscode-button-background)',
-        color: 'var(--vscode-button-foreground)',
+        background: getThemeVar('buttonBackground'),
+        color: getThemeVar('buttonForeground'),
         padding: '8px 12px',
         fontWeight: 'bold',
         fontSize: '14px',
         boxSizing: 'border-box',
-        borderBottom: '1px solid var(--vscode-panel-border)',
+        borderBottom: `1px solid ${getThemeVar('panelBorder')}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
@@ -62,7 +63,7 @@ const TableNode = ({ data }) => {
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--vscode-button-foreground)',
+              color: getThemeVar('buttonForeground'),
               cursor: 'pointer',
               fontSize: '12px',
               padding: '2px 4px',
@@ -86,13 +87,13 @@ const TableNode = ({ data }) => {
               style={{
                 padding: '4px 12px',
                 fontSize: '12px',
-                color: 'var(--vscode-editor-foreground)',
-                borderBottom: index < table.fields.length - 1 ? '1px solid var(--vscode-panel-border)' : 'none',
+                color: getThemeVar('foreground'),
+                borderBottom: index < table.fields.length - 1 ? `1px solid ${getThemeVar('panelBorder')}` : 'none',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 position: 'relative',
-                backgroundColor: hasColumnHandle(column.name) ? 'var(--vscode-editor-inactiveSelectionBackground)' : 'transparent'
+                backgroundColor: hasColumnHandle(column.name) ? getThemeVar('editorInactiveSelectionBackground') : 'transparent'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -111,9 +112,9 @@ const TableNode = ({ data }) => {
                   {column.name}
                 </span>
                 {hasColumnHandle(column.name) && (
-                  <span style={{ 
-                    fontSize: '10px', 
-                    color: 'var(--vscode-charts-lines)',
+                  <span style={{
+                    fontSize: '10px',
+                    color: getThemeVar('chartsLines'),
                     fontWeight: 'bold',
                     lineHeight: '1'
                   }}>
@@ -121,8 +122,8 @@ const TableNode = ({ data }) => {
                   </span>
                 )}
               </div>
-              <span style={{ 
-                color: 'var(--vscode-descriptionForeground)',
+              <span style={{
+                color: getThemeVar('descriptionForeground'),
                 fontSize: '10px',
                 fontFamily: 'monospace'
               }}>
@@ -137,8 +138,8 @@ const TableNode = ({ data }) => {
                   id={`${column.name}`}
                   style={{
                     right: '-4px',
-                    background: 'var(--vscode-charts-lines)',
-                    border: '2px solid var(--vscode-editor-background)',
+                    background: getThemeVar('chartsLines'),
+                    border: `2px solid ${getThemeVar('editorBackground')}`,
                     width: '6px',
                     height: '6px',
                     borderRadius: '50%'
@@ -157,8 +158,8 @@ const TableNode = ({ data }) => {
         position={Position.Left}
         id="table-target"
         style={{
-          background: 'var(--vscode-button-background)',
-          border: '2px solid var(--vscode-button-foreground)',
+          background: getThemeVar('buttonBackground'),
+          border: `2px solid ${getThemeVar('buttonForeground')}`,
           width: '8px',
           height: '8px'
         }}
@@ -168,8 +169,8 @@ const TableNode = ({ data }) => {
         position={Position.Right}
         id="table-source"
         style={{
-          background: 'var(--vscode-button-background)',
-          border: '2px solid var(--vscode-button-foreground)',
+          background: getThemeVar('buttonBackground'),
+          border: `2px solid ${getThemeVar('buttonForeground')}`,
           width: '8px',
           height: '8px'
         }}

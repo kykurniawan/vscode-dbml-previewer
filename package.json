@@ -2,7 +2,7 @@
   "name": "dbml-previewer",
   "displayName": "DBML Previewer",
   "description": "Transform DBML files into interactive visual database diagrams with drag-and-drop tables, relationship tooltips, multi-schema support, and real-time preview updates",
-  "version": "0.0.5",
+  "version": "1.0.0",
   "publisher": "rizkykurniawan",
   "author": {
     "name": "Rizky Kurniawan",
@@ -114,7 +114,35 @@
         ],
         "configuration": "./language-configuration.json"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "DBML Previewer",
+      "properties": {
+        "diagram.inheritThemeStyle": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to inherit styling from the current VS Code theme. When disabled, uses a clean light theme optimized for diagram readability."
+        },
+        "diagram.edgeType": {
+          "type": "string",
+          "default": "smoothstep",
+          "enum": [
+            "straight",
+            "step",
+            "smoothstep",
+            "bezier"
+          ],
+          "enumDescriptions": [
+            "Default React Flow edge with curves",
+            "Straight line between nodes",
+            "Step-style edge with right angles",
+            "Smooth step edge with rounded corners",
+            "Bezier curve edge"
+          ],
+          "description": "The type of edge/connection lines to use for table relationships in the diagram."
+        }
+      }
+    }
   },
   "scripts": {
     "lint": "eslint .",

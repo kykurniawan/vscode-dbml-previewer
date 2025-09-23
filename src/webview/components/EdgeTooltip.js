@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { getThemeVar } from '../styles/themeManager.js';
 
 const EdgeTooltip = ({ edge, position, onClose }) => {
   const tooltipRef = useRef(null);
@@ -63,14 +64,14 @@ const EdgeTooltip = ({ edge, position, onClose }) => {
     position: 'fixed',
     left: `${position.x}px`,
     top: `${position.y}px`,
-    background: 'var(--vscode-editor-background)',
-    border: '1px solid var(--vscode-panel-border)',
+    background: getThemeVar('editorBackground'),
+    border: `1px solid ${getThemeVar('panelBorder')}`,
     borderRadius: '4px',
     padding: '12px',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-    color: 'var(--vscode-editor-foreground)',
+    color: getThemeVar('foreground'),
     fontSize: '12px',
-    fontFamily: 'var(--vscode-font-family)',
+    fontFamily: getThemeVar('fontFamily'),
     zIndex: 1000,
     maxWidth: '300px',
     minWidth: '200px',
@@ -81,14 +82,14 @@ const EdgeTooltip = ({ edge, position, onClose }) => {
   const headerStyle = {
     fontWeight: 'bold',
     marginBottom: '8px',
-    color: 'var(--vscode-textLink-foreground)',
+    color: getThemeVar('textLinkForeground'),
     fontSize: '11px',
     textTransform: 'uppercase',
     letterSpacing: '0.5px'
   };
 
   const relationshipStyle = {
-    fontFamily: 'var(--vscode-editor-font-family)',
+    fontFamily: getThemeVar('editorFontFamily'),
     marginBottom: '6px',
     fontSize: '13px',
     wordBreak: 'break-all'
@@ -96,7 +97,7 @@ const EdgeTooltip = ({ edge, position, onClose }) => {
 
   const cardinalityStyle = {
     fontSize: '11px',
-    color: 'var(--vscode-descriptionForeground)',
+    color: getThemeVar('descriptionForeground'),
     fontWeight: 'bold'
   };
 
@@ -106,7 +107,7 @@ const EdgeTooltip = ({ edge, position, onClose }) => {
     right: '4px',
     background: 'none',
     border: 'none',
-    color: 'var(--vscode-icon-foreground)',
+    color: getThemeVar('iconForeground'),
     cursor: 'pointer',
     fontSize: '14px',
     padding: '2px',

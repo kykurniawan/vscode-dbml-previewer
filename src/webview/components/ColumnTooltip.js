@@ -1,4 +1,5 @@
 import React from 'react';
+import { getThemeVar } from '../styles/themeManager.js';
 
 const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
   if (!column || !position) {
@@ -38,16 +39,16 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
     left: Math.min(position.x, window.innerWidth - 320), // 320px is tooltip width
     top: Math.min(position.y, window.innerHeight - 200), // Estimate tooltip height
     zIndex: 1000,
-    background: 'var(--vscode-editor-background)',
-    border: '1px solid var(--vscode-panel-border)',
+    background: getThemeVar('editorBackground'),
+    border: `1px solid ${getThemeVar('panelBorder')}`,
     borderRadius: '6px',
     padding: '12px',
     minWidth: '280px',
     maxWidth: '320px',
     fontSize: '12px',
-    color: 'var(--vscode-editor-foreground)',
+    color: getThemeVar('foreground'),
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    fontFamily: 'var(--vscode-font-family)'
+    fontFamily: getThemeVar('fontFamily')
   };
 
   return (
@@ -58,7 +59,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
         alignItems: 'center', 
         gap: '8px', 
         marginBottom: '12px',
-        borderBottom: '1px solid var(--vscode-panel-border)',
+        borderBottom: `1px solid ${getThemeVar('panelBorder')}`,
         paddingBottom: '8px'
       }}>
         <span style={{ fontSize: '14px' }}>
@@ -67,7 +68,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
         <span style={{ 
           fontWeight: 'bold', 
           fontSize: '14px',
-          color: column.pk ? 'var(--vscode-symbolIcon-keywordForeground)' : 'var(--vscode-editor-foreground)'
+          color: column.pk ? getThemeVar('symbolIconKeywordForeground') : getThemeVar('foreground')
         }}>
           {column.name}
         </span>
@@ -77,7 +78,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
             marginLeft: 'auto',
             background: 'none',
             border: 'none',
-            color: 'var(--vscode-icon-foreground)',
+            color: getThemeVar('iconForeground'),
             cursor: 'pointer',
             fontSize: '16px',
             padding: '2px',
@@ -92,7 +93,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
       {/* Column type */}
       <div style={{ marginBottom: '8px' }}>
         <span style={{ 
-          color: 'var(--vscode-descriptionForeground)',
+          color: getThemeVar('descriptionForeground'),
           fontWeight: '500'
         }}>
           Type: 
@@ -100,7 +101,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
         <span style={{ 
           marginLeft: '6px',
           fontFamily: 'monospace',
-          backgroundColor: 'var(--vscode-textCodeBlock-background)',
+          backgroundColor: getThemeVar('textCodeBlockBackground'),
           padding: '2px 4px',
           borderRadius: '3px',
           fontSize: '11px'
@@ -113,7 +114,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
       {getColumnConstraints(column).length > 0 && (
         <div style={{ marginBottom: '8px' }}>
           <span style={{ 
-            color: 'var(--vscode-descriptionForeground)',
+            color: getThemeVar('descriptionForeground'),
             fontWeight: '500'
           }}>
             Constraints: 
@@ -124,8 +125,8 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
                 key={index}
                 style={{
                   display: 'inline-block',
-                  backgroundColor: 'var(--vscode-badge-background)',
-                  color: 'var(--vscode-badge-foreground)',
+                  backgroundColor: getThemeVar('badgeBackground'),
+                  color: getThemeVar('badgeForeground'),
                   padding: '2px 6px',
                   borderRadius: '10px',
                   fontSize: '10px',
@@ -144,7 +145,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
       {getDefaultValue(column) && (
         <div style={{ marginBottom: '8px' }}>
           <span style={{ 
-            color: 'var(--vscode-descriptionForeground)',
+            color: getThemeVar('descriptionForeground'),
             fontWeight: '500'
           }}>
             Default: 
@@ -152,7 +153,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
           <span style={{ 
             marginLeft: '6px',
             fontFamily: 'monospace',
-            backgroundColor: 'var(--vscode-textCodeBlock-background)',
+            backgroundColor: getThemeVar('textCodeBlockBackground'),
             padding: '2px 4px',
             borderRadius: '3px',
             fontSize: '11px'
@@ -166,7 +167,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
       {column.note && (
         <div style={{ marginBottom: '8px' }}>
           <span style={{ 
-            color: 'var(--vscode-descriptionForeground)',
+            color: getThemeVar('descriptionForeground'),
             fontWeight: '500'
           }}>
             Note: 
@@ -174,7 +175,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
           <span style={{ 
             marginLeft: '6px',
             fontStyle: 'italic',
-            color: 'var(--vscode-descriptionForeground)'
+            color: getThemeVar('descriptionForeground')
           }}>
             {column.note}
           </span>
@@ -185,7 +186,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
       {enumDef && (
         <div style={{ marginTop: '12px' }}>
           <div style={{ 
-            color: 'var(--vscode-descriptionForeground)',
+            color: getThemeVar('descriptionForeground'),
             fontWeight: '500',
             marginBottom: '6px',
             display: 'flex',
@@ -196,8 +197,8 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
             <span>Enum Values ({enumDef.name}):</span>
           </div>
           <div style={{
-            backgroundColor: 'var(--vscode-textCodeBlock-background)',
-            border: '1px solid var(--vscode-panel-border)',
+            backgroundColor: getThemeVar('textCodeBlockBackground'),
+            border: `1px solid ${getThemeVar('panelBorder')}`,
             borderRadius: '4px',
             padding: '8px',
             maxHeight: '150px',
@@ -208,21 +209,21 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
                 key={index}
                 style={{
                   padding: '4px 0',
-                  borderBottom: index < enumDef.values.length - 1 ? '1px solid var(--vscode-panel-border)' : 'none'
+                  borderBottom: index < enumDef.values.length - 1 ? `1px solid ${getThemeVar('panelBorder')}` : 'none'
                 }}
               >
                 <div style={{
                   fontFamily: 'monospace',
                   fontSize: '11px',
                   fontWeight: 'bold',
-                  color: 'var(--vscode-symbolIcon-variableForeground)'
+                  color: getThemeVar('symbolIconVariableForeground')
                 }}>
                   {value.name}
                 </div>
                 {value.note && (
                   <div style={{
                     fontSize: '10px',
-                    color: 'var(--vscode-descriptionForeground)',
+                    color: getThemeVar('descriptionForeground'),
                     fontStyle: 'italic',
                     marginTop: '2px',
                     paddingLeft: '8px'

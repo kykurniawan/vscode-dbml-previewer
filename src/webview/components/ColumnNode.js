@@ -1,5 +1,6 @@
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { getThemeVar } from '../styles/themeManager.js';
 
 const ColumnNode = ({ data }) => {
   const { column, hasSourceHandle, hasTargetHandle, columnWidth = 196, enumDef, onColumnClick } = data;
@@ -31,22 +32,22 @@ const ColumnNode = ({ data }) => {
   };
 
   return (
-    <div 
+    <div
       style={{
-        background: 'var(--vscode-editor-background)',
-        border: '1px solid var(--vscode-panel-border)',
+        background: getThemeVar('editorBackground'),
+        border: `1px solid ${getThemeVar('panelBorder')}`,
         borderRadius: '4px',
         width: `${columnWidth}px`, // Dynamic width based on content
         height: '28px', // Fixed height to match layout calculation
         padding: '4px 8px',
         fontSize: '12px',
-        color: 'var(--vscode-editor-foreground)',
+        color: getThemeVar('foreground'),
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         position: 'relative',
         boxSizing: 'border-box',
-        backgroundColor: (hasSourceHandle || hasTargetHandle) ? 'var(--vscode-editor-inactiveSelectionBackground)' : 'transparent',
+        backgroundColor: (hasSourceHandle || hasTargetHandle) ? getThemeVar('editorInactiveSelectionBackground') : 'transparent',
         cursor: 'pointer'
       }}
       onClick={handleClick}
@@ -61,8 +62,8 @@ const ColumnNode = ({ data }) => {
           id="target"
           style={{
             left: '-4px',
-            background: 'var(--vscode-charts-lines)',
-            border: '2px solid var(--vscode-editor-background)',
+            background: getThemeVar('chartsLines'),
+            border: `2px solid ${getThemeVar('editorBackground')}`,
             width: '6px',
             height: '6px',
             borderRadius: '50%'
@@ -89,7 +90,7 @@ const ColumnNode = ({ data }) => {
         {(hasSourceHandle || hasTargetHandle) && (
           <span style={{ 
             fontSize: '10px', 
-            color: 'var(--vscode-charts-lines)',
+            color: getThemeVar('chartsLines'),
             fontWeight: 'bold',
             lineHeight: '1'
           }}>
@@ -100,7 +101,7 @@ const ColumnNode = ({ data }) => {
 
       {/* Column Type */}
       <span style={{ 
-        color: 'var(--vscode-descriptionForeground)',
+        color: getThemeVar('descriptionForeground'),
         fontSize: '10px',
         fontFamily: 'monospace',
         marginLeft: '8px'
@@ -116,8 +117,8 @@ const ColumnNode = ({ data }) => {
           id="source"
           style={{
             right: '-4px',
-            background: 'var(--vscode-charts-lines)',
-            border: '2px solid var(--vscode-editor-background)',
+            background: getThemeVar('chartsLines'),
+            border: `2px solid ${getThemeVar('editorBackground')}`,
             width: '6px',
             height: '6px',
             borderRadius: '50%'
