@@ -210,7 +210,7 @@ If you encounter any problems:
    - VS Code version and OS information
 
 ### Getting Help
-- 📖 Check our documentation and FAQ
+- 📖 Check our documentation
 - 💬 Join discussions in GitHub Issues
 - 📧 Contact us at contact.rizkykurniawan@gmail.com
 
@@ -224,15 +224,7 @@ If you encounter any problems:
 
 ### 🔜 **Coming Soon**
 - 📤 **Export to PNG/SVG/PDF** - Save your diagrams
-- 🔍 **Search & Filter** - Find tables instantly
 - 🎨 **Custom Themes** - Personalize your diagrams
-- 📏 **Minimap** - Navigate large schemas easily
-
-### 🚀 **Future Vision**
-- Database integration for live schema import
-- Collaborative editing and sharing
-- Advanced schema validation and migration tools
-- Performance optimizations for enterprise databases
 
 ## 📄 License
 
