@@ -1,6 +1,7 @@
 # 🚀 DBML Previewer
 
 [![VS Code Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-blue)](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-Registry-blue)](https://open-vsx.org/extension/rizkykurniawan/dbml-previewer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub issues](https://img.shields.io/github/issues/kykurniawan/vscode-dbml-previewer)](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
 [![GitHub stars](https://img.shields.io/github/stars/kykurniawan/vscode-dbml-previewer)](https://github.com/kykurniawan/vscode-dbml-previewer/stargazers)
@@ -69,12 +70,27 @@ Perfect for database architects, developers, and anyone working with database sc
 ## 🚀 Get Started in 30 Seconds
 
 ### 📦 **Quick Install**
+
+**From VS Code:**
 ```bash
-# Install from command line
+# VS Code / Visual Studio Code
 code --install-extension rizkykurniawan.dbml-previewer
 ```
 
-**Or** search "DBML Previewer" in VS Code Extensions (`Ctrl+Shift+X`)
+**From VSCodium/Open VSX:**
+```bash
+# VSCodium or other Open VSX compatible editors
+codium --install-extension rizkykurniawan.dbml-previewer
+```
+
+**Or** search "DBML Previewer" in your editor's Extensions panel (`Ctrl+Shift+X`)
+
+**Supported Editors:**
+- ✅ Visual Studio Code (via [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer))
+- ✅ VSCodium (via [Open VSX Registry](https://open-vsx.org/extension/rizkykurniawan/dbml-previewer))
+- ✅ Eclipse Theia
+- ✅ Gitpod
+- ✅ Any VS Code compatible editor
 
 ### ⚡ **Instant Usage**
 1. 📁 **Open** any `.dbml` file in VS Code

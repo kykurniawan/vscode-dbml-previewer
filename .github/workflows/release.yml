@@ -27,7 +27,10 @@ jobs:
         
       - name: Install vsce
         run: npm install -g @vscode/vsce
-        
+
+      - name: Install ovsx
+        run: npm install -g ovsx
+
       - name: Package extension
         run: npm run package
         
@@ -50,12 +53,14 @@ jobs:
           release_name: Release v${{ steps.get_version.outputs.VERSION }}
           body: |
             ## Changes in v${{ steps.get_version.outputs.VERSION }}
-            
+
             See the full changelog: [CHANGELOG.md](https://github.com/kykurniawan/vscode-dbml-previewer/blob/main/CHANGELOG.md#${{ steps.get_version.outputs.CHANGELOG_ANCHOR }})
-            
+
             ### Installation
-            Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer) or download the `.vsix` file below and install manually.
-            
+
+            Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer) or [Open VSX Registry](https://open-vsx.org/extension/rizkykurniawan/dbml-previewer)
+
+            Or download the `.vsix` file below and install manually:
             ```bash
             code --install-extension rizkykurniawan.dbml-previewer-${{ steps.get_version.outputs.VERSION }}.vsix
             ```
@@ -73,6 +78,40 @@ jobs:
           asset_content_type: application/zip
           
       - name: Publish to VS Code Marketplace
+        id: publish_vscode
+        continue-on-error: true
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npm run publish
+
+      - name: Publish to Open VSX Registry
+        id: publish_ovsx
+        continue-on-error: true
+        env:
+          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+        run: npm run publish:ovsx
+
+      - name: Report publishing summary
+        if: always()
+        run: |
+          echo "### Publishing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.publish_vscode.outcome }}" == "success" ]; then
+            echo "✅ **VS Code Marketplace**: Published successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **VS Code Marketplace**: Failed to publish" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.publish_ovsx.outcome }}" == "success" ]; then
+            echo "✅ **Open VSX Registry**: Published successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Open VSX Registry**: Failed to publish" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.publish_vscode.outcome }}" == "failure" ] && [ "${{ steps.publish_ovsx.outcome }}" == "failure" ]; then
+            echo "🚨 Failed to publish to both marketplaces" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

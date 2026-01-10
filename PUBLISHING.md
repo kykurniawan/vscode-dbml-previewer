@@ -24,6 +24,24 @@ This extension uses automated publishing via GitHub Actions. When you push a ver
    - **Name**: `VSCE_PAT`
    - **Value**: Paste your Personal Access Token from step 1
 
+### 3. Get Open VSX Registry Personal Access Token
+
+1. Go to [Open VSX Registry](https://open-vsx.org/)
+2. Sign in with your GitHub account
+3. Go to your user settings (click profile icon → Settings)
+4. Navigate to "Access Tokens" section
+5. Click "Generate New Token"
+6. Enter token name: `vscode-extension-publish`
+7. Copy the token (store it securely!)
+
+### 4. Add Open VSX Secret to GitHub Repository
+
+1. Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Add secret:
+   - **Name**: `OVSX_TOKEN`
+   - **Value**: Paste your Open VSX token from step 3
+
 ## Publishing a Release
 
 ### 1. Update CHANGELOG.md
@@ -65,8 +83,9 @@ GitHub Actions will automatically:
 - ✅ Create GitHub Release with link to changelog
 - ✅ Upload .vsix file to GitHub Release
 - ✅ Publish to VS Code Marketplace
+- ✅ Publish to Open VSX Registry
 
-**Note:** The GitHub release will include a link to the specific version section in CHANGELOG.md, so make sure your changelog is updated before pushing the tag.
+**Note:** Both marketplaces are published independently. If one fails, the other will still be attempted. The GitHub release will include a link to the specific version section in CHANGELOG.md, so make sure your changelog is updated before pushing the tag.
 
 ### 5. Monitor Progress
 - Check the **Actions** tab in your GitHub repository
@@ -82,9 +101,16 @@ If you prefer manual control:
 npm run build
 npm run package
 
-# Publish manually
+# Publish to VS Code Marketplace only
 npm run publish
+
+# Publish to Open VSX only
+npm run publish:ovsx
 ```
+
+**Prerequisites for manual publishing:**
+- Set `VSCE_PAT` environment variable for VS Code Marketplace
+- Set `OVSX_TOKEN` environment variable for Open VSX Registry
 
 ## Troubleshooting
 
@@ -102,8 +128,18 @@ npm run publish
    - Ensure all dependencies are properly listed in package.json
    - Check that webpack builds successfully locally first
 
+4. **Open VSX: "Publisher not found" error**
+   - Create a namespace on Open VSX matching publisher name: `rizkykurniawan`
+   - Go to https://open-vsx.org/user-settings/namespaces
+   - Request namespace if it doesn't exist
+
+5. **Open VSX: Token permission denied**
+   - Verify OVSX_TOKEN secret is set correctly in GitHub
+   - Regenerate token if necessary
+
 ### Getting Help
 
 - Check workflow logs in GitHub Actions tab
 - VS Code Extension documentation: https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 - vsce CLI documentation: https://github.com/microsoft/vscode-vsce
+- Open VSX documentation: https://github.com/eclipse/openvsx/wiki/Publishing-Extensions
