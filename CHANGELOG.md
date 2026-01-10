@@ -2,6 +2,11 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 1.3.3
+
+### Fixed
+- **Open VSX Publishing Failure**: Remove .yarnrc 
+
 ## 1.3.2
 
 ### Fixed
