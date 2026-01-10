@@ -2,6 +2,37 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 1.3.1
+
+### Added
+- **Open VSX Registry Support**: Extension is now available on Open VSX Registry for VSCodium and other VS Code compatible editors
+  - Published to both VS Code Marketplace and Open VSX Registry
+  - VSCodium users can now install the extension directly from Open VSX
+  - Support for Eclipse Theia, Gitpod, and other VS Code compatible editors
+  - Automated dual-marketplace publishing via GitHub Actions
+
+### Improved
+- **Installation Documentation**: Enhanced README with installation instructions for multiple editors
+  - Added Open VSX badge and links
+  - Installation commands for both VS Code and VSCodium
+  - Listed all supported editors with marketplace links
+- **Publishing Documentation**: Updated PUBLISHING.md with comprehensive Open VSX setup guide
+  - Step-by-step token creation instructions
+  - Troubleshooting guide for Open VSX-specific issues
+  - Manual publishing commands for both marketplaces
+
+### Technical
+- Updated `.github/workflows/release.yml` with Open VSX publishing steps
+  - Added `ovsx` CLI installation
+  - Sequential publishing to both marketplaces with independent error handling
+  - Publishing summary report showing status of both marketplaces
+  - GitHub release notes now include links to both marketplaces
+- Added `publish:ovsx` npm script for manual Open VSX publishing
+- Enhanced GitHub Actions workflow with graceful error handling
+  - Each marketplace publishes independently
+  - Workflow succeeds if at least one marketplace publishes successfully
+  - Clear status reporting for both marketplaces in GitHub Actions summary
+
 ## 1.3.0
 
 ### Added
