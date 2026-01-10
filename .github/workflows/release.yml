@@ -88,7 +88,7 @@ jobs:
         id: publish_ovsx
         continue-on-error: true
         env:
-          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: npm run publish:ovsx
 
       - name: Report publishing summary

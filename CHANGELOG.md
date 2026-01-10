@@ -2,6 +2,19 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 1.3.2
+
+### Fixed
+- **Open VSX Publishing Failure**: Fixed workflow failure caused by invalid `--no-yarn` flag
+  - Removed unsupported `--no-yarn` option from `publish:ovsx` npm script
+  - The ovsx CLI defaults to npm without any flag (only accepts `--yarn` to use Yarn explicitly)
+  - Open VSX publishing now works correctly in automated GitHub Actions workflow
+
+### Technical
+- Updated `package.json` publish:ovsx script from `ovsx publish --no-yarn` to `ovsx publish`
+- Updated workflow to use `OVSX_PAT` environment variable (ovsx CLI convention) instead of explicit token flag
+- Fixed compatibility with ovsx CLI per official OpenVSX documentation
+
 ## 1.3.1
 
 ### Added
