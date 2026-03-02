@@ -263,8 +263,8 @@ const DBMLPreview = ({ initialContent }) => {
     }
   }, [exportBackground, exportPadding]);
 
-  // Bulk export: capture the current diagram and send the PNG data URL back to the extension host
-  const handleBulkExportProcess = useCallback(async (outputName, content) => {
+  // Bulk export: capture the current diagram and send the data URL back to the extension host
+  const handleBulkExportProcess = useCallback(async (outputName, content, format = 'png') => {
     const vscode = window.vscode;
     try {
       // Set a stable non-null fileId so the transform useEffect (which guards on fileId !== null) runs.
@@ -292,16 +292,21 @@ const DBMLPreview = ({ initialContent }) => {
 
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      const dataUrl = await toPng(flowElement, {
-        quality: exportQuality,
-        backgroundColor: exportBackground ? getThemeVar('background') : 'transparent',
-        pixelRatio: 2,
-        style: { padding: `${exportPadding}px` }
-      });
+      const dataUrl = format === 'svg'
+        ? await toSvg(flowElement, {
+          backgroundColor: exportBackground ? getThemeVar('background') : 'transparent',
+          style: { padding: `${exportPadding}px` }
+        })
+        : await toPng(flowElement, {
+          quality: exportQuality,
+          backgroundColor: exportBackground ? getThemeVar('background') : 'transparent',
+          pixelRatio: 2,
+          style: { padding: `${exportPadding}px` }
+        });
 
       elementsToHide.forEach(el => { el.style.display = ''; });
 
-      vscode.postMessage({ type: 'bulkExportResult', outputName, dataUrl });
+      vscode.postMessage({ type: 'bulkExportResult', outputName, dataUrl, format });
     } catch (error) {
       const fe = document.querySelector('.react-flow');
       if (fe) {
@@ -831,7 +836,7 @@ const DBMLPreview = ({ initialContent }) => {
           handleExportToSvg();
           break;
         case 'bulkExportProcess':
-          handleBulkExportProcessRef.current(message.outputName, message.content);
+          handleBulkExportProcessRef.current(message.outputName, message.content, message.format);
           break;
       }
     };

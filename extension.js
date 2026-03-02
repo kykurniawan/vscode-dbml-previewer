@@ -76,10 +76,14 @@ function activate(context) {
 	});
 
 	const bulkExportCommand = vscode.commands.registerCommand('dbml-previewer.bulkExportToPNG', function (uri) {
-		runBulkExport(context, uri);
+		runBulkExport(context, uri, 'png');
 	});
 
-	context.subscriptions.push(previewCommand, previewFromExplorerCommand, exportToPNGCommand, exportToSVGCommand, bulkExportCommand);
+	const bulkExportSvgCommand = vscode.commands.registerCommand('dbml-previewer.bulkExportToSVG', function (uri) {
+		runBulkExport(context, uri, 'svg');
+	});
+
+	context.subscriptions.push(previewCommand, previewFromExplorerCommand, exportToPNGCommand, exportToSVGCommand, bulkExportCommand, bulkExportSvgCommand);
 }
 
 /**
@@ -290,14 +294,15 @@ function resolveFolderPath(folderSetting) {
 /**
  * Collect all .dbml files in a directory (non-recursive).
  * @param {string} sourceDir
+ * @param {string} ext  Output file extension, e.g. '.png' or '.svg'
  * @returns {{ filePath: string, outputName: string }[]}
  */
-function collectDbmlFiles(sourceDir) {
+function collectDbmlFiles(sourceDir, ext = '.png') {
 	return fs.readdirSync(sourceDir, { withFileTypes: true })
 		.filter(e => e.isFile() && e.name.toLowerCase().endsWith('.dbml'))
 		.map(e => ({
 			filePath: path.join(sourceDir, e.name),
-			outputName: path.basename(e.name, '.dbml') + '.png'
+			outputName: path.basename(e.name, '.dbml') + ext
 		}));
 }
 
@@ -374,9 +379,15 @@ function handleBulkWebviewMessage(message, panel) {
 			bulkExportResults.push({ outputName: message.outputName, success: false, error: message.error });
 		} else {
 			try {
-				const base64Data = message.dataUrl.replace(/^data:image\/png;base64,/, '');
 				const outputPath = path.join(bulkExportOutputDir, message.outputName);
-				fs.writeFileSync(outputPath, Buffer.from(base64Data, 'base64'));
+				if (message.format === 'svg') {
+					// toSvg returns a URL-encoded data URL: data:image/svg+xml;charset=utf-8,...
+					const svgContent = decodeURIComponent(message.dataUrl.replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+					fs.writeFileSync(outputPath, svgContent, 'utf8');
+				} else {
+					const base64Data = message.dataUrl.replace(/^data:image\/png;base64,/, '');
+					fs.writeFileSync(outputPath, Buffer.from(base64Data, 'base64'));
+				}
 				bulkExportResults.push({ outputName: message.outputName, success: true });
 			} catch (err) {
 				bulkExportResults.push({ outputName: message.outputName, success: false, error: `Failed to save: ${err.message}` });
@@ -409,9 +420,10 @@ function waitForBulkPanelReady() {
  * Send one file to the bulk export webview and wait for the result.
  * @param {string} outputName
  * @param {string} content
+ * @param {'png'|'svg'} format
  * @returns {Promise<void>}
  */
-function processOneBulkFile(outputName, content) {
+function processOneBulkFile(outputName, content, format) {
 	return new Promise(resolve => {
 		const timeout = setTimeout(() => {
 			if (bulkExportProgressResolve === wrappedResolve) {
@@ -431,7 +443,8 @@ function processOneBulkFile(outputName, content) {
 		bulkExportPanel.webview.postMessage({
 			type: 'bulkExportProcess',
 			content,
-			outputName
+			outputName,
+			format
 		});
 	});
 }
@@ -467,8 +480,9 @@ function showBulkExportSummary(results, outputDir) {
  * Run the bulk export flow.
  * @param {vscode.ExtensionContext} context
  * @param {vscode.Uri|undefined} uri  Folder URI passed from Explorer context menu.
+ * @param {'png'|'svg'} format
  */
-async function runBulkExport(context, uri) {
+async function runBulkExport(context, uri, format = 'png') {
 	// 1. Determine source folder
 	let sourceDir;
 	if (uri && uri.fsPath) {
@@ -487,7 +501,7 @@ async function runBulkExport(context, uri) {
 	// 2. Collect .dbml files
 	let files;
 	try {
-		files = collectDbmlFiles(sourceDir);
+		files = collectDbmlFiles(sourceDir, `.${format}`);
 	} catch (err) {
 		vscode.window.showErrorMessage(`Cannot read source folder: ${err.message}`);
 		return;
@@ -543,7 +557,7 @@ async function runBulkExport(context, uri) {
 
 				try {
 					const content = fs.readFileSync(file.filePath, 'utf8');
-					await processOneBulkFile(file.outputName, content);
+					await processOneBulkFile(file.outputName, content, format);
 				} catch (err) {
 					bulkExportResults.push({ outputName: file.outputName, success: false, error: err.message });
 				}

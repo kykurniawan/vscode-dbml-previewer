@@ -77,6 +77,12 @@
         "title": "Bulk Export DBML Files to PNG",
         "category": "DBML Previewer",
         "icon": "$(export)"
+      },
+      {
+        "command": "dbml-previewer.bulkExportToSVG",
+        "title": "Bulk Export DBML Files to SVG",
+        "category": "DBML Previewer",
+        "icon": "$(export)"
       }
     ],
     "menus": {
@@ -88,6 +94,11 @@
         },
         {
           "command": "dbml-previewer.bulkExportToPNG",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation"
+        },
+        {
+          "command": "dbml-previewer.bulkExportToSVG",
           "when": "explorerResourceIsFolder",
           "group": "navigation"
         }
@@ -125,6 +136,9 @@
         },
         {
           "command": "dbml-previewer.bulkExportToPNG"
+        },
+        {
+          "command": "dbml-previewer.bulkExportToSVG"
         }
       ]
     },
@@ -139,6 +153,11 @@
         "command": "dbml-previewer.bulkExportToPNG",
         "key": "ctrl+shift+alt+e",
         "mac": "cmd+shift+alt+e"
+      },
+      {
+        "command": "dbml-previewer.bulkExportToSVG",
+        "key": "ctrl+shift+alt+s",
+        "mac": "cmd+shift+alt+s"
       }
     ],
     "languages": [
