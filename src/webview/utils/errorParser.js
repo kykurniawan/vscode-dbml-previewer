@@ -39,6 +39,11 @@ const DBML_SYNTAX_HELP = {
  */
 const ERROR_PATTERNS = [
   {
+    pattern: /A custom element can only appear in a Project/i,
+    type: 'checks_unsupported',
+    extract: () => ({})
+  },
+  {
     pattern: /line (\d+) column (\d+)/i,
     type: 'syntax',
     extract: (match) => ({
@@ -75,6 +80,16 @@ const ERROR_PATTERNS = [
  * Common error types and their solutions
  */
 const ERROR_SOLUTIONS = {
+  'checks_unsupported': {
+    title: 'Check Constraint Not Supported',
+    icon: '⚠️',
+    color: 'var(--vscode-inputValidation-warningForeground)',
+    suggestions: [
+      'The `checks` keyword inside a Table definition is not supported by the underlying DBML parser',
+      'Please update to the latest version of this extension, which handles `checks` blocks automatically',
+      'See the DBML spec: https://dbml.dbdiagram.io/docs#check-definition'
+    ]
+  },
   'syntax': {
     title: 'Syntax Error',
     icon: '❌',
@@ -364,19 +379,23 @@ const extractErrorMessage = (error) => {
  */
 const categorizeError = (errorMessage, parsedInfo) => {
   const message = errorMessage.toLowerCase();
-  
+
+  if (message.includes('custom element can only appear in a project')) {
+    return 'checks_unsupported';
+  }
+
   if (message.includes('encoding') || message.includes('character') || parsedInfo.found === '�') {
     return 'encoding';
   }
-  
+
   if (message.includes('expected') || parsedInfo.expected) {
     return 'expectation';
   }
-  
+
   if (message.includes('structure') || message.includes('invalid')) {
     return 'structure';
   }
-  
+
   return 'syntax';
 };
 
