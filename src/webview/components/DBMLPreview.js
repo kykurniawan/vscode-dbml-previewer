@@ -21,11 +21,13 @@ import TableGroupNode from './TableGroupNode';
 import EdgeTooltip from './EdgeTooltip';
 import ColumnTooltip from './ColumnTooltip';
 import TableNoteTooltip from './TableNoteTooltip';
+import TableChecksTooltip from './TableChecksTooltip';
 import StickyNote from './StickyNote';
 import ErrorDisplay from './ErrorDisplay';
 import TableNavigationDropdown from './TableNavigationDropdown';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 import { parseDBMLError, formatErrorForDisplay } from '../utils/errorParser';
+import { preprocessChecks } from '../utils/dbmlPreprocessor';
 import {
   saveLayout,
   loadLayout,
@@ -122,6 +124,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [tooltipData, setTooltipData] = useState(null);
   const [columnTooltipData, setColumnTooltipData] = useState(null);
   const [tableNoteTooltipData, setTableNoteTooltipData] = useState(null);
+  const [tableChecksTooltipData, setTableChecksTooltipData] = useState(null);
   const [tableGroups, setTableGroups] = useState([]);
   const [draggedGroupPositions, setDraggedGroupPositions] = useState(new Map());
   const [fileId, setFileId] = useState(null);
@@ -134,6 +137,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [exportBackground, setExportBackground] = useState(true);
   const [exportPadding, setExportPadding] = useState(20);
   const [handleTableNavigation, setHandleTableNavigation] = useState(null);
+  const [tableChecks, setTableChecks] = useState({});
 
 
   // Export handlers
@@ -359,6 +363,20 @@ const DBMLPreview = ({ initialContent }) => {
     setTableNoteTooltipData(null);
   }, []);
 
+  // Handle checks button click for tooltip display
+  const handleTableChecksClick = useCallback((table, checks, position) => {
+    setTooltipData(null);
+    setSelectedEdgeIds(new Set());
+    setColumnTooltipData(null);
+    setTableNoteTooltipData(null);
+    setTableChecksTooltipData({ table, checks, position });
+  }, []);
+
+  // Handle checks tooltip close
+  const handleCloseTableChecksTooltip = useCallback(() => {
+    setTableChecksTooltipData(null);
+  }, []);
+
 
   // Handle ESC key and click outside to close tooltips
   useEffect(() => {
@@ -474,13 +492,13 @@ const DBMLPreview = ({ initialContent }) => {
       saveLayout(fileId, {});
       // Trigger re-transform with empty positions
       if (dbmlData) {
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, edgeType);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
       }
     }
-  }, [fileId, dbmlData, edgeType, setNodes, setEdges, handleColumnClick, handleTableNoteClick]);
+  }, [fileId, dbmlData, edgeType, tableChecks, setNodes, setEdges, handleColumnClick, handleTableNoteClick, handleTableChecksClick]);
 
   // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
@@ -602,6 +620,7 @@ const DBMLPreview = ({ initialContent }) => {
       setDbmlData(null);
       setParseError(null);
       setEnhancedErrorInfo(null);
+      setTableChecks({});
       setNodes([]);
       setEdges([]);
       setTableGroups([]);
@@ -613,8 +632,10 @@ const DBMLPreview = ({ initialContent }) => {
     setEnhancedErrorInfo(null);
 
     try {
+      const { cleanedContent, tableChecks: extracted } = preprocessChecks(content);
+      setTableChecks(extracted);
       const parser = new Parser();
-      const parsed = parser.parse(content, 'dbmlv2');
+      const parsed = parser.parse(cleanedContent, 'dbmlv2');
       setDbmlData(parsed);
     } catch (error) {
       console.error('DBML Parse Error:', error);
@@ -625,6 +646,7 @@ const DBMLPreview = ({ initialContent }) => {
 
       setParseError(error.message || 'Failed to parse DBML content');
       setEnhancedErrorInfo(formattedError);
+      setTableChecks({});
       setDbmlData(null);
     } finally {
       setIsLoading(false);
@@ -799,7 +821,7 @@ const DBMLPreview = ({ initialContent }) => {
           saveLayout(fileId, cleanedPositions);
         }
 
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick, edgeType);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
@@ -807,7 +829,7 @@ const DBMLPreview = ({ initialContent }) => {
         console.error('Error transforming DBML data:', error);
       }
     }
-  }, [dbmlData, fileId, edgeType, setNodes, setEdges]);
+  }, [dbmlData, fileId, edgeType, tableChecks, setNodes, setEdges]);
 
   // Update edge styles based on selection state
   useEffect(() => {
@@ -1065,6 +1087,15 @@ const DBMLPreview = ({ initialContent }) => {
           table={tableNoteTooltipData.table}
           position={tableNoteTooltipData.position}
           onClose={handleCloseTableNoteTooltip}
+        />
+      )}
+
+      {tableChecksTooltipData && (
+        <TableChecksTooltip
+          table={tableChecksTooltipData.table}
+          checks={tableChecksTooltipData.checks}
+          position={tableChecksTooltipData.position}
+          onClose={handleCloseTableChecksTooltip}
         />
       )}
     </div>
