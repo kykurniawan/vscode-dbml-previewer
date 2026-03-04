@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; // eslint-disable-line no-unused-vars
+import React, { useState, useEffect, useCallback, useRef } from 'react'; // eslint-disable-line no-unused-vars
 import {
   ReactFlow,
   Controls,
@@ -139,6 +139,8 @@ const DBMLPreview = ({ initialContent }) => {
   const [handleTableNavigation, setHandleTableNavigation] = useState(null);
   const [tableChecks, setTableChecks] = useState({});
 
+  // Ref to the React Flow instance — used to call fitView() imperatively during bulk export
+  const reactFlowRef = useRef(null);
 
   // Export handlers
   const handleExportToPng = useCallback(async () => {
@@ -260,6 +262,65 @@ const DBMLPreview = ({ initialContent }) => {
       alert('Failed to export diagram to SVG. Please try again.');
     }
   }, [exportBackground, exportPadding]);
+
+  // Bulk export: capture the current diagram and send the data URL back to the extension host
+  const handleBulkExportProcess = useCallback(async (outputName, content, format = 'png') => {
+    const vscode = window.vscode;
+    try {
+      // Set a stable non-null fileId so the transform useEffect (which guards on fileId !== null) runs.
+      // Use the outputName so each file gets a unique layout bucket in sessionStorage.
+      setFileId(generateFileId(outputName));
+      setDbmlContent(content);
+
+      // Wait for the full render pipeline: DBML parse + dagre layout + React re-render
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Fit the viewport to the rendered nodes before capturing.
+      // The fitView prop only fires on initial mount; we must call it imperatively here.
+      reactFlowRef.current?.fitView({ duration: 0 });
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const flowElement = document.querySelector('.react-flow');
+      if (!flowElement) throw new Error('React Flow element not found');
+
+      const elementsToHide = [
+        flowElement.querySelector('.react-flow__controls'),
+        flowElement.querySelector('.react-flow__minimap'),
+        ...Array.from(flowElement.querySelectorAll('.react-flow__panel'))
+      ].filter(Boolean);
+      elementsToHide.forEach(el => { el.style.display = 'none'; });
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const dataUrl = format === 'svg'
+        ? await toSvg(flowElement, {
+          backgroundColor: exportBackground ? getThemeVar('background') : 'transparent',
+          style: { padding: `${exportPadding}px` }
+        })
+        : await toPng(flowElement, {
+          quality: exportQuality,
+          backgroundColor: exportBackground ? getThemeVar('background') : 'transparent',
+          pixelRatio: 2,
+          style: { padding: `${exportPadding}px` }
+        });
+
+      elementsToHide.forEach(el => { el.style.display = ''; });
+
+      vscode.postMessage({ type: 'bulkExportResult', outputName, dataUrl, format });
+    } catch (error) {
+      const fe = document.querySelector('.react-flow');
+      if (fe) {
+        [fe.querySelector('.react-flow__controls'), fe.querySelector('.react-flow__minimap'),
+          ...Array.from(fe.querySelectorAll('.react-flow__panel'))].filter(Boolean)
+          .forEach(el => { el.style.display = ''; });
+      }
+      vscode.postMessage({ type: 'bulkExportResult', outputName, error: error.message || 'Unknown error' });
+    }
+  }, [exportQuality, exportBackground, exportPadding]);
+
+  // Ref so the message listener (registered once with [] deps) always calls the latest version
+  const handleBulkExportProcessRef = useRef(null);
+  handleBulkExportProcessRef.current = handleBulkExportProcess;
 
   // Callback to receive navigation function from EdgeNavigationProvider
   const setNavigationHandler = useCallback((navigationFn) => {
@@ -774,6 +835,9 @@ const DBMLPreview = ({ initialContent }) => {
         case 'exportToSVG':
           handleExportToSvg();
           break;
+        case 'bulkExportProcess':
+          handleBulkExportProcessRef.current(message.outputName, message.content, message.format);
+          break;
       }
     };
 
@@ -949,6 +1013,7 @@ const DBMLPreview = ({ initialContent }) => {
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
         fitView
+        onInit={(instance) => { reactFlowRef.current = instance; }}
         attributionPosition="bottom-left"
         nodesConnectable={false}
         nodesDraggable={true}

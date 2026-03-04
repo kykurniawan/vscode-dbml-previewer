@@ -71,6 +71,18 @@
         "title": "Export Diagram to SVG",
         "category": "DBML Previewer",
         "icon": "$(file-media)"
+      },
+      {
+        "command": "dbml-previewer.bulkExportToPNG",
+        "title": "Bulk Export DBML Files to PNG",
+        "category": "DBML Previewer",
+        "icon": "$(export)"
+      },
+      {
+        "command": "dbml-previewer.bulkExportToSVG",
+        "title": "Bulk Export DBML Files to SVG",
+        "category": "DBML Previewer",
+        "icon": "$(export)"
       }
     ],
     "menus": {
@@ -78,6 +90,16 @@
         {
           "command": "dbml-previewer.previewFromExplorer",
           "when": "resourceExtname == .dbml",
+          "group": "navigation"
+        },
+        {
+          "command": "dbml-previewer.bulkExportToPNG",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation"
+        },
+        {
+          "command": "dbml-previewer.bulkExportToSVG",
+          "when": "explorerResourceIsFolder",
           "group": "navigation"
         }
       ],
@@ -111,6 +133,12 @@
         {
           "command": "dbml-previewer.exportToSVG",
           "when": "dbmlPreviewerActive"
+        },
+        {
+          "command": "dbml-previewer.bulkExportToPNG"
+        },
+        {
+          "command": "dbml-previewer.bulkExportToSVG"
         }
       ]
     },
@@ -120,6 +148,16 @@
         "key": "ctrl+shift+d",
         "mac": "cmd+shift+d",
         "when": "resourceExtname == .dbml && editorTextFocus"
+      },
+      {
+        "command": "dbml-previewer.bulkExportToPNG",
+        "key": "ctrl+shift+alt+e",
+        "mac": "cmd+shift+alt+e"
+      },
+      {
+        "command": "dbml-previewer.bulkExportToSVG",
+        "key": "ctrl+shift+alt+s",
+        "mac": "cmd+shift+alt+s"
       }
     ],
     "languages": [
@@ -179,6 +217,11 @@
           "minimum": 0,
           "maximum": 100,
           "description": "Padding around the diagram in exported images (in pixels)."
+        },
+        "diagram.bulkExport.outputFolder": {
+          "type": "string",
+          "default": "",
+          "description": "Path to folder where bulk-exported PNG files will be saved. Relative paths resolve from workspace root. Leave empty to save into a 'dbml-exports' subfolder inside the source folder."
         }
       }
     }
