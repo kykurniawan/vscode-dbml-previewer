@@ -5,6 +5,39 @@ const path = require('path');
 // Track the active preview panel
 let activePreviewPanel = null;
 
+function getLayoutFilePath(dbmlFilePath) {
+	return dbmlFilePath + '.layout.json';
+}
+
+function readLayoutFile(dbmlFilePath) {
+	try {
+		const layoutPath = getLayoutFilePath(dbmlFilePath);
+		if (!fs.existsSync(layoutPath)) return null;
+		const parsed = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
+		if (parsed?.version === 1 && parsed.positions && typeof parsed.positions === 'object') {
+			return parsed.positions;
+		}
+		return null;
+	} catch { return null; }
+}
+
+function writeLayoutFile(dbmlFilePath, positions) {
+	try {
+		fs.writeFileSync(
+			getLayoutFilePath(dbmlFilePath),
+			JSON.stringify({ version: 1, positions }, null, 2),
+			'utf8'
+		);
+	} catch (e) { console.warn('Failed to write layout file:', e.message); }
+}
+
+function deleteLayoutFile(dbmlFilePath) {
+	try {
+		const layoutPath = getLayoutFilePath(dbmlFilePath);
+		if (fs.existsSync(layoutPath)) fs.unlinkSync(layoutPath);
+	} catch (e) { console.warn('Failed to delete layout file:', e.message); }
+}
+
 // Bulk export state
 let bulkExportPanel = null;
 let bulkExportResults = [];
@@ -84,6 +117,37 @@ function activate(context) {
 	});
 
 	context.subscriptions.push(previewCommand, previewFromExplorerCommand, exportToPNGCommand, exportToSVGCommand, bulkExportCommand, bulkExportSvgCommand);
+
+	// Track paths that are being renamed so delete events don't remove their layout files
+	const recentlyRenamedDbmlPaths = new Set();
+
+	// Global: rename layout file whenever any DBML file is renamed in the workspace
+	const globalRenameListener = vscode.workspace.onDidRenameFiles(event => {
+		for (const { oldUri, newUri } of event.files) {
+			if (oldUri.fsPath.toLowerCase().endsWith('.dbml')) {
+				recentlyRenamedDbmlPaths.add(oldUri.fsPath);
+				setTimeout(() => recentlyRenamedDbmlPaths.delete(oldUri.fsPath), 2000);
+				try {
+					const oldLayoutPath = getLayoutFilePath(oldUri.fsPath);
+					if (fs.existsSync(oldLayoutPath)) {
+						fs.renameSync(oldLayoutPath, getLayoutFilePath(newUri.fsPath));
+					}
+				} catch (e) {
+					console.warn('Failed to rename layout file:', e.message);
+				}
+			}
+		}
+	});
+	context.subscriptions.push(globalRenameListener);
+
+	// Global: delete layout file whenever any DBML file is deleted (not renamed)
+	const globalDbmlWatcher = vscode.workspace.createFileSystemWatcher('**/*.dbml');
+	globalDbmlWatcher.onDidDelete(uri => {
+		if (!recentlyRenamedDbmlPaths.has(uri.fsPath)) {
+			deleteLayoutFile(uri.fsPath);
+		}
+	});
+	context.subscriptions.push(globalDbmlWatcher);
 }
 
 /**
@@ -107,6 +171,7 @@ function readFileAndPreview(context, filePath) {
  * @param {string} content
  */
 function createPreviewPanel(context, filePath, content) {
+	let currentFilePath = filePath;
 	const fileName = path.basename(filePath);
 
 	const panel = vscode.window.createWebviewPanel(
@@ -134,13 +199,23 @@ function createPreviewPanel(context, filePath, content) {
 	const exportBackground = config.get('exportBackground', true);
 	const exportPadding = config.get('exportPadding', 20);
 
+	// Read persisted layout for this file; create the file immediately if it doesn't exist yet
+	const initialLayout = readLayoutFile(currentFilePath);
+	if (!fs.existsSync(getLayoutFilePath(currentFilePath))) {
+		writeLayoutFile(currentFilePath, {});
+	}
+
 	// Set the webview content
-	panel.webview.html = getWebviewContent(content, fileName, filePath, panel.webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding);
+	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding, initialLayout);
+
+	// Debounce state for layout file writes
+	let layoutSaveTimer = null;
+	let pendingPositions = null;
 
 	// Handle messages from the webview
 	panel.webview.onDidReceiveMessage(
 		message => {
-			switch (message.command) {
+			switch (message.type || message.command) {
 				case 'export':
 					vscode.window.showWarningMessage('Exporting DBML is not yet supported');
 					break;
@@ -160,6 +235,20 @@ function createPreviewPanel(context, filePath, content) {
 						exportBackground: currentExportBackground,
 						exportPadding: currentExportPadding
 					});
+					break;
+				case 'saveLayout':
+					pendingPositions = message.positions;
+					clearTimeout(layoutSaveTimer);
+					layoutSaveTimer = setTimeout(() => {
+						writeLayoutFile(currentFilePath, message.positions);
+						layoutSaveTimer = null;
+					}, 500);
+					break;
+				case 'clearLayout':
+					clearTimeout(layoutSaveTimer);
+					layoutSaveTimer = null;
+					pendingPositions = null;
+					deleteLayoutFile(currentFilePath);
 					break;
 			}
 		},
@@ -193,11 +282,11 @@ function createPreviewPanel(context, filePath, content) {
 
 	context.subscriptions.push(configChangeListener);
 
-	// Auto-refresh when file changes (optional)
-	const fileWatcher = vscode.workspace.createFileSystemWatcher(filePath);
+	// Auto-refresh when file changes
+	const fileWatcher = vscode.workspace.createFileSystemWatcher(currentFilePath);
 	fileWatcher.onDidChange(() => {
 		try {
-			const updatedContent = fs.readFileSync(filePath, 'utf8');
+			const updatedContent = fs.readFileSync(currentFilePath, 'utf8');
 			panel.webview.postMessage({
 				type: 'updateContent',
 				content: updatedContent
@@ -206,10 +295,24 @@ function createPreviewPanel(context, filePath, content) {
 			console.error('Error auto-refreshing:', error);
 		}
 	});
+	// Update currentFilePath when the open file is renamed (global listener handles the actual file rename)
+	const renameListener = vscode.workspace.onDidRenameFiles(event => {
+		for (const { oldUri, newUri } of event.files) {
+			if (oldUri.fsPath === currentFilePath) {
+				currentFilePath = newUri.fsPath;
+				break;
+			}
+		}
+	});
+	context.subscriptions.push(renameListener);
 
-	// Clean up watcher when panel is disposed
+	// Clean up when panel is disposed
 	panel.onDidDispose(() => {
 		fileWatcher.dispose();
+		clearTimeout(layoutSaveTimer);
+		if (pendingPositions) {
+			writeLayoutFile(currentFilePath, pendingPositions);
+		}
 		// Clear active panel reference
 		if (activePreviewPanel === panel) {
 			activePreviewPanel = null;
@@ -231,9 +334,10 @@ function createPreviewPanel(context, filePath, content) {
  * @param {number} exportQuality
  * @param {boolean} exportBackground
  * @param {number} exportPadding
+ * @param {Object|null} initialLayout
  * @returns {string}
  */
-function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding) {
+function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding, initialLayout = null) {
 	// Get the local path to main script run in the webview
 	const scriptPathOnDisk = vscode.Uri.file(path.join(__dirname, 'dist', 'webview.js'));
 	const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -271,6 +375,7 @@ function getWebviewContent(content, fileName, filePath, webview, inheritThemeSty
 			window.exportQuality = ${JSON.stringify(exportQuality)};
 			window.exportBackground = ${JSON.stringify(exportBackground)};
 			window.exportPadding = ${JSON.stringify(exportPadding)};
+			window.initialLayout = ${JSON.stringify(initialLayout)};
 		</script>
 		<script src="${scriptUri}"></script>
 	</body>

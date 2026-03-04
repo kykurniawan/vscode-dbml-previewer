@@ -125,6 +125,24 @@ export const extractTablePositions = (nodes) => {
 };
 
 /**
+ * Seed sessionStorage with positions loaded from the layout file.
+ * Called once on init when window.initialLayout is available.
+ * @param {string} fileId
+ * @param {Object} positions
+ */
+export const applyPersistedLayout = (fileId, positions) => {
+  try {
+    const existingLayouts = getStoredLayouts();
+    existingLayouts[fileId] = { positions, timestamp: Date.now() };
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(existingLayouts));
+    }
+  } catch (error) {
+    console.warn('Failed to apply persisted layout:', error);
+  }
+};
+
+/**
  * Clean up obsolete positions that no longer exist in current schema
  * @param {Object} savedPositions - Previously saved positions
  * @param {Array} currentNodeIds - Array of current node IDs (tables and sticky notes)

@@ -33,7 +33,8 @@ import {
   loadLayout,
   generateFileId,
   extractTablePositions,
-  cleanupObsoletePositions
+  cleanupObsoletePositions,
+  applyPersistedLayout,
 } from '../utils/layoutStorage';
 
 const nodeTypes = {
@@ -540,6 +541,7 @@ const DBMLPreview = ({ initialContent }) => {
           const positions = extractTablePositions(currentNodes);
           setSavedPositions(positions);
           saveLayout(fileId, positions);
+          window.vscode.postMessage({ type: 'saveLayout', positions });
         }
         return currentNodes; // Don't modify nodes, just extract positions
       });
@@ -551,6 +553,7 @@ const DBMLPreview = ({ initialContent }) => {
     if (fileId) {
       setSavedPositions({});
       saveLayout(fileId, {});
+      window.vscode.postMessage({ type: 'clearLayout' });
       // Trigger re-transform with empty positions
       if (dbmlData) {
         const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick);
@@ -631,6 +634,7 @@ const DBMLPreview = ({ initialContent }) => {
               setSavedPositions(updatedPositions);
               if (fileId) {
                 saveLayout(fileId, updatedPositions);
+                window.vscode.postMessage({ type: 'saveLayout', positions: updatedPositions });
               }
             }
 
@@ -725,9 +729,15 @@ const DBMLPreview = ({ initialContent }) => {
       const newFileId = generateFileId(windowFilePath);
       setFileId(newFileId);
 
-      // Load saved positions for this file
-      const positions = loadLayout(newFileId);
-      setSavedPositions(positions);
+      // Use file-persisted layout as source of truth (injected by extension host),
+      // falling back to sessionStorage for same-session persistence
+      if (window.initialLayout && typeof window.initialLayout === 'object') {
+        applyPersistedLayout(newFileId, window.initialLayout);
+        setSavedPositions(window.initialLayout);
+      } else {
+        const positions = loadLayout(newFileId);
+        setSavedPositions(positions);
+      }
     }
   }, []);
 
