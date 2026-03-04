@@ -117,6 +117,37 @@ function activate(context) {
 	});
 
 	context.subscriptions.push(previewCommand, previewFromExplorerCommand, exportToPNGCommand, exportToSVGCommand, bulkExportCommand, bulkExportSvgCommand);
+
+	// Track paths that are being renamed so delete events don't remove their layout files
+	const recentlyRenamedDbmlPaths = new Set();
+
+	// Global: rename layout file whenever any DBML file is renamed in the workspace
+	const globalRenameListener = vscode.workspace.onDidRenameFiles(event => {
+		for (const { oldUri, newUri } of event.files) {
+			if (oldUri.fsPath.toLowerCase().endsWith('.dbml')) {
+				recentlyRenamedDbmlPaths.add(oldUri.fsPath);
+				setTimeout(() => recentlyRenamedDbmlPaths.delete(oldUri.fsPath), 2000);
+				try {
+					const oldLayoutPath = getLayoutFilePath(oldUri.fsPath);
+					if (fs.existsSync(oldLayoutPath)) {
+						fs.renameSync(oldLayoutPath, getLayoutFilePath(newUri.fsPath));
+					}
+				} catch (e) {
+					console.warn('Failed to rename layout file:', e.message);
+				}
+			}
+		}
+	});
+	context.subscriptions.push(globalRenameListener);
+
+	// Global: delete layout file whenever any DBML file is deleted (not renamed)
+	const globalDbmlWatcher = vscode.workspace.createFileSystemWatcher('**/*.dbml');
+	globalDbmlWatcher.onDidDelete(uri => {
+		if (!recentlyRenamedDbmlPaths.has(uri.fsPath)) {
+			deleteLayoutFile(uri.fsPath);
+		}
+	});
+	context.subscriptions.push(globalDbmlWatcher);
 }
 
 /**
@@ -168,8 +199,11 @@ function createPreviewPanel(context, filePath, content) {
 	const exportBackground = config.get('exportBackground', true);
 	const exportPadding = config.get('exportPadding', 20);
 
-	// Read persisted layout for this file
+	// Read persisted layout for this file; create the file immediately if it doesn't exist yet
 	const initialLayout = readLayoutFile(currentFilePath);
+	if (!fs.existsSync(getLayoutFilePath(currentFilePath))) {
+		writeLayoutFile(currentFilePath, {});
+	}
 
 	// Set the webview content
 	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding, initialLayout);
@@ -261,23 +295,10 @@ function createPreviewPanel(context, filePath, content) {
 			console.error('Error auto-refreshing:', error);
 		}
 	});
-	fileWatcher.onDidDelete(() => {
-		deleteLayoutFile(currentFilePath);
-	});
-
-	// Rename layout file when the DBML file is renamed
+	// Update currentFilePath when the open file is renamed (global listener handles the actual file rename)
 	const renameListener = vscode.workspace.onDidRenameFiles(event => {
 		for (const { oldUri, newUri } of event.files) {
 			if (oldUri.fsPath === currentFilePath) {
-				const oldLayoutPath = getLayoutFilePath(oldUri.fsPath);
-				const newLayoutPath = getLayoutFilePath(newUri.fsPath);
-				try {
-					if (fs.existsSync(oldLayoutPath)) {
-						fs.renameSync(oldLayoutPath, newLayoutPath);
-					}
-				} catch (e) {
-					console.warn('Failed to rename layout file:', e.message);
-				}
 				currentFilePath = newUri.fsPath;
 				break;
 			}
