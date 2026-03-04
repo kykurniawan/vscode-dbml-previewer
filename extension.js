@@ -5,6 +5,39 @@ const path = require('path');
 // Track the active preview panel
 let activePreviewPanel = null;
 
+function getLayoutFilePath(dbmlFilePath) {
+	return dbmlFilePath + '.layout.json';
+}
+
+function readLayoutFile(dbmlFilePath) {
+	try {
+		const layoutPath = getLayoutFilePath(dbmlFilePath);
+		if (!fs.existsSync(layoutPath)) return null;
+		const parsed = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
+		if (parsed?.version === 1 && parsed.positions && typeof parsed.positions === 'object') {
+			return parsed.positions;
+		}
+		return null;
+	} catch { return null; }
+}
+
+function writeLayoutFile(dbmlFilePath, positions) {
+	try {
+		fs.writeFileSync(
+			getLayoutFilePath(dbmlFilePath),
+			JSON.stringify({ version: 1, positions }, null, 2),
+			'utf8'
+		);
+	} catch (e) { console.warn('Failed to write layout file:', e.message); }
+}
+
+function deleteLayoutFile(dbmlFilePath) {
+	try {
+		const layoutPath = getLayoutFilePath(dbmlFilePath);
+		if (fs.existsSync(layoutPath)) fs.unlinkSync(layoutPath);
+	} catch (e) { console.warn('Failed to delete layout file:', e.message); }
+}
+
 // Bulk export state
 let bulkExportPanel = null;
 let bulkExportResults = [];
@@ -107,6 +140,7 @@ function readFileAndPreview(context, filePath) {
  * @param {string} content
  */
 function createPreviewPanel(context, filePath, content) {
+	let currentFilePath = filePath;
 	const fileName = path.basename(filePath);
 
 	const panel = vscode.window.createWebviewPanel(
@@ -134,13 +168,20 @@ function createPreviewPanel(context, filePath, content) {
 	const exportBackground = config.get('exportBackground', true);
 	const exportPadding = config.get('exportPadding', 20);
 
+	// Read persisted layout for this file
+	const initialLayout = readLayoutFile(currentFilePath);
+
 	// Set the webview content
-	panel.webview.html = getWebviewContent(content, fileName, filePath, panel.webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding);
+	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding, initialLayout);
+
+	// Debounce state for layout file writes
+	let layoutSaveTimer = null;
+	let pendingPositions = null;
 
 	// Handle messages from the webview
 	panel.webview.onDidReceiveMessage(
 		message => {
-			switch (message.command) {
+			switch (message.type || message.command) {
 				case 'export':
 					vscode.window.showWarningMessage('Exporting DBML is not yet supported');
 					break;
@@ -160,6 +201,20 @@ function createPreviewPanel(context, filePath, content) {
 						exportBackground: currentExportBackground,
 						exportPadding: currentExportPadding
 					});
+					break;
+				case 'saveLayout':
+					pendingPositions = message.positions;
+					clearTimeout(layoutSaveTimer);
+					layoutSaveTimer = setTimeout(() => {
+						writeLayoutFile(currentFilePath, message.positions);
+						layoutSaveTimer = null;
+					}, 500);
+					break;
+				case 'clearLayout':
+					clearTimeout(layoutSaveTimer);
+					layoutSaveTimer = null;
+					pendingPositions = null;
+					deleteLayoutFile(currentFilePath);
 					break;
 			}
 		},
@@ -193,11 +248,11 @@ function createPreviewPanel(context, filePath, content) {
 
 	context.subscriptions.push(configChangeListener);
 
-	// Auto-refresh when file changes (optional)
-	const fileWatcher = vscode.workspace.createFileSystemWatcher(filePath);
+	// Auto-refresh when file changes
+	const fileWatcher = vscode.workspace.createFileSystemWatcher(currentFilePath);
 	fileWatcher.onDidChange(() => {
 		try {
-			const updatedContent = fs.readFileSync(filePath, 'utf8');
+			const updatedContent = fs.readFileSync(currentFilePath, 'utf8');
 			panel.webview.postMessage({
 				type: 'updateContent',
 				content: updatedContent
@@ -206,10 +261,37 @@ function createPreviewPanel(context, filePath, content) {
 			console.error('Error auto-refreshing:', error);
 		}
 	});
+	fileWatcher.onDidDelete(() => {
+		deleteLayoutFile(currentFilePath);
+	});
 
-	// Clean up watcher when panel is disposed
+	// Rename layout file when the DBML file is renamed
+	const renameListener = vscode.workspace.onDidRenameFiles(event => {
+		for (const { oldUri, newUri } of event.files) {
+			if (oldUri.fsPath === currentFilePath) {
+				const oldLayoutPath = getLayoutFilePath(oldUri.fsPath);
+				const newLayoutPath = getLayoutFilePath(newUri.fsPath);
+				try {
+					if (fs.existsSync(oldLayoutPath)) {
+						fs.renameSync(oldLayoutPath, newLayoutPath);
+					}
+				} catch (e) {
+					console.warn('Failed to rename layout file:', e.message);
+				}
+				currentFilePath = newUri.fsPath;
+				break;
+			}
+		}
+	});
+	context.subscriptions.push(renameListener);
+
+	// Clean up when panel is disposed
 	panel.onDidDispose(() => {
 		fileWatcher.dispose();
+		clearTimeout(layoutSaveTimer);
+		if (pendingPositions) {
+			writeLayoutFile(currentFilePath, pendingPositions);
+		}
 		// Clear active panel reference
 		if (activePreviewPanel === panel) {
 			activePreviewPanel = null;
@@ -231,9 +313,10 @@ function createPreviewPanel(context, filePath, content) {
  * @param {number} exportQuality
  * @param {boolean} exportBackground
  * @param {number} exportPadding
+ * @param {Object|null} initialLayout
  * @returns {string}
  */
-function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding) {
+function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding, initialLayout = null) {
 	// Get the local path to main script run in the webview
 	const scriptPathOnDisk = vscode.Uri.file(path.join(__dirname, 'dist', 'webview.js'));
 	const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -271,6 +354,7 @@ function getWebviewContent(content, fileName, filePath, webview, inheritThemeSty
 			window.exportQuality = ${JSON.stringify(exportQuality)};
 			window.exportBackground = ${JSON.stringify(exportBackground)};
 			window.exportPadding = ${JSON.stringify(exportPadding)};
+			window.initialLayout = ${JSON.stringify(initialLayout)};
 		</script>
 		<script src="${scriptUri}"></script>
 	</body>
