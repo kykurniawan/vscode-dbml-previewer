@@ -3,15 +3,13 @@ import {
   getBezierPath,
   getStraightPath,
   getSmoothStepPath,
-  getStepPath,
-  EdgeLabelRenderer,
   BaseEdge,
+  EdgeLabelRenderer,
 } from '@xyflow/react';
 
 const getPathFunction = (pathStyle) => {
   switch (pathStyle) {
     case 'straight': return getStraightPath;
-    case 'step': return getStepPath;
     case 'smoothstep': return getSmoothStepPath;
     case 'bezier':
     default: return getBezierPath;

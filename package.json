@@ -186,14 +186,11 @@
           "default": "smoothstep",
           "enum": [
             "straight",
-            "step",
             "smoothstep",
             "bezier"
           ],
           "enumDescriptions": [
-            "Default React Flow edge with curves",
             "Straight line between nodes",
-            "Step-style edge with right angles",
             "Smooth step edge with rounded corners",
             "Bezier curve edge"
           ],
