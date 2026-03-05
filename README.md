@@ -22,15 +22,6 @@ Perfect for database architects, developers, and anyone working with database sc
 - ✅ **CHECK Keyword Support**: Full support for DBML `check` column constraint
 - 🎨 **Relationship Line Colors**: Custom colors on relationship lines
 
-### Previous Updates
-
-#### v1.3.0 - Navigation Enhancement Release
-
-- 🔗 **Clickable Table Names in Tooltips**: Navigate instantly by clicking table names in relationship tooltips
-- 🔍 **Enhanced Zoom Navigation**: Improved zoom level (1.5x) when navigating to tables for better visibility
-- ✨ **Interactive Relationships**: Hover and click table names with VS Code theme-aware styling
-- 🎯 **Smoother Navigation**: Better focus and readability when jumping between related tables
-
 ## ⚡ Key Features
 
 ### 🎯 **Instant Visual Database Diagrams**
