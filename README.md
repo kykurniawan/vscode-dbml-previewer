@@ -15,6 +15,7 @@ Perfect for database architects, developers, and anyone working with database sc
 ## 🌟 What's New
 
 ### v1.3.0 - Navigation Enhancement Release
+
 - 🔗 **Clickable Table Names in Tooltips**: Navigate instantly by clicking table names in relationship tooltips
 - 🔍 **Enhanced Zoom Navigation**: Improved zoom level (1.5x) when navigating to tables for better visibility
 - ✨ **Interactive Relationships**: Hover and click table names with VS Code theme-aware styling
@@ -23,12 +24,14 @@ Perfect for database architects, developers, and anyone working with database sc
 ### Previous Updates
 
 #### v1.2.0 - Color Customization
+
 - 🎨 **Custom Table Colors**: Use `headercolor` property to customize individual table header colors
 - 🌈 **Custom Group Colors**: Apply custom colors to table groups with the `color` property
 - ♿ **Smart Text Contrast**: Automatic white/black text selection based on background brightness
 - ✅ **WCAG Compliance**: Accessible color contrast ratios for all custom colors
 
 #### v1.1.0 - Export Features
+
 - 📤 **Export to PNG/SVG**: Save your diagrams as high-quality images
 - 🎛️ **Export Configuration**: Customize image quality, background, and padding
 - ⌨️ **Multiple Access Points**: Export via UI buttons or VSCode commands
@@ -37,47 +40,54 @@ Perfect for database architects, developers, and anyone working with database sc
 ## ⚡ Key Features
 
 ### 🎯 **Instant Visual Database Diagrams**
+
 ✅ **One-Click Preview** - Transform DBML files into interactive diagrams instantly  
 ✅ **Real-Time Updates** - See changes as you save your DBML files  
 ✅ **Drag & Drop Tables** - Customize layout with automatic position saving  
-✅ **Smart Table Notes** - Clean popup tooltips for table documentation  
+✅ **Smart Table Notes** - Clean popup tooltips for table documentation
 
 ### 🔗 **Intelligent Relationship Mapping**
+
 ✅ **Visual Connections** - See foreign key relationships at a glance
 ✅ **Interactive Tooltips** - Click relationships for detailed information
 ✅ **Clickable Navigation** - Click table names in tooltips to navigate instantly
 ✅ **Column-Level Precision** - Exact source and target column identification
-✅ **Cardinality Display** - Clear 1:1, 1:*, *:* relationship indicators  
+✅ **Cardinality Display** - Clear 1:1, 1:_, _:\* relationship indicators
 
 ### 📊 **Enterprise-Ready Schema Support**
+
 ✅ **Multi-Schema Files** - Handle complex databases with multiple schemas  
 ✅ **Table Grouping** - Visual organization with background containers  
 ✅ **Rich Column Details** - Types, constraints, keys, and enum support  
-✅ **Full DBML Specification** - Complete support for all DBML features  
+✅ **Full DBML Specification** - Complete support for all DBML features
 
 ### 🎨 **Seamless VS Code Integration**
+
 ✅ **Flexible Theming** - Choose VS Code theme inheritance or clean light theme
 ✅ **Multiple Access Points** - Command palette, context menu, keyboard shortcuts
 ✅ **Side-by-Side Editing** - Preview alongside your DBML file
 ✅ **Quick Access** - `Ctrl+Shift+D` / `Cmd+Shift+D` keyboard shortcut
 
 ### 📤 **Professional Export Capabilities**
+
 ✅ **PNG Export** - High-resolution raster images for documentation
 ✅ **SVG Export** - Scalable vector graphics for presentations
 ✅ **Configurable Quality** - Adjust image quality and resolution
-✅ **Background Control** - Export with or without background color  
+✅ **Background Control** - Export with or without background color
 
 ## 🚀 Get Started in 30 Seconds
 
 ### 📦 **Quick Install**
 
 **From VS Code:**
+
 ```bash
 # VS Code / Visual Studio Code
 code --install-extension rizkykurniawan.dbml-previewer
 ```
 
 **From VSCodium/Open VSX:**
+
 ```bash
 # VSCodium or other Open VSX compatible editors
 codium --install-extension rizkykurniawan.dbml-previewer
@@ -86,6 +96,7 @@ codium --install-extension rizkykurniawan.dbml-previewer
 **Or** search "DBML Previewer" in your editor's Extensions panel (`Ctrl+Shift+X`)
 
 **Supported Editors:**
+
 - ✅ Visual Studio Code (via [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer))
 - ✅ VSCodium (via [Open VSX Registry](https://open-vsx.org/extension/rizkykurniawan/dbml-previewer))
 - ✅ Eclipse Theia
@@ -93,11 +104,13 @@ codium --install-extension rizkykurniawan.dbml-previewer
 - ✅ Any VS Code compatible editor
 
 ### ⚡ **Instant Usage**
+
 1. 📁 **Open** any `.dbml` file in VS Code
 2. ⌨️ **Press** `Ctrl+Shift+D` (Windows/Linux) or `Cmd+Shift+D` (macOS)
 3. 🎉 **Done!** Your database diagram appears instantly
 
 **Alternative Methods:**
+
 - Right-click file → "Preview DBML"
 - Click preview button in editor title bar
 - Command Palette → "DBML Previewer: Preview DBML"
@@ -136,7 +149,7 @@ Table order_items {
   product_id integer [not null]
   quantity integer [not null]
   price decimal(10,2) [not null]
-  
+
   indexes {
     (order_id, product_id) [pk]
   }
@@ -161,17 +174,20 @@ This extension supports the full DBML specification including:
 ## 🎛️ Controls and Navigation
 
 ### Diagram Controls
+
 - **Zoom**: Mouse wheel or zoom controls in bottom-left
 - **Pan**: Click and drag empty space to move around
 - **Fit View**: Reset zoom to fit entire diagram
 
 ### Table Interaction
+
 - **Drag Tables**: Click and drag table headers to reposition
 - **Group Movement**: Drag table groups to move all contained tables
 - **Relationship Details**: Click relationship lines for detailed information
 - **Navigate via Tooltips**: Click table names in relationship tooltips to jump to that table
 
 ### Keyboard Shortcuts
+
 - `Ctrl+Shift+D` / `Cmd+Shift+D`: Open DBML preview
 - Mouse wheel: Zoom in/out
 - Space + drag: Pan diagram
@@ -182,21 +198,23 @@ This extension supports the full DBML specification including:
 The extension works out of the box with sensible defaults and includes the following configuration options:
 
 ### Theme Configuration
+
 - **`diagram.inheritThemeStyle`** (boolean, default: `false`)
   - Controls whether diagrams inherit VS Code theme styling
   - When disabled, uses a clean light theme optimized for diagram readability
   - Prevents issues with poorly designed VS Code themes
 
 ### Edge Type Configuration
+
 - **`diagram.edgeType`** (string, default: `"smoothstep"`)
   - Customizes the visual style of relationship connections
   - Available options:
     - `"straight"` - Direct straight lines between tables
-    - `"step"` - Step-style edges with right angles
     - `"smoothstep"` - Smooth step edges with rounded corners (recommended)
     - `"bezier"` - Curved bezier edges for organic appearance
 
 ### Export Configuration
+
 - **`diagram.exportQuality`** (number, default: `0.95`)
   - Image quality for PNG exports (0.1 to 1.0)
   - Higher values produce better quality but larger file sizes
@@ -213,25 +231,30 @@ The extension works out of the box with sensible defaults and includes the follo
   - Provides visual breathing room around your diagram
 
 ### How to Configure
+
 1. Open VS Code Settings (`Ctrl+,` / `Cmd+,`)
 2. Search for "diagram" or "DBML Previewer"
 3. Adjust settings to your preference
 4. Changes apply immediately without restart
 
 ### How to Export
+
 **Via UI Buttons (recommended):**
+
 1. Open any DBML file and preview it
 2. Look for export buttons in the top-right stats panel
 3. Click "📷 Export PNG" or "🖼️ Export SVG"
 4. Image downloads automatically with timestamped filename
 
 **Via Command Palette:**
+
 1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
 2. Search for "Export Diagram to PNG" or "Export Diagram to SVG"
 3. Execute the command
 4. Image downloads automatically
 
 ### Future Configuration Options
+
 - Performance optimization toggles
 - Advanced layout algorithm options
 
@@ -240,6 +263,7 @@ The extension works out of the box with sensible defaults and includes the follo
 Want to contribute? Check out our [Contributing Guide](CONTRIBUTING.md) for detailed setup instructions, coding guidelines, and development workflow.
 
 **Quick Development Setup:**
+
 ```bash
 git clone https://github.com/kykurniawan/vscode-dbml-previewer.git
 cd vscode-dbml-previewer
@@ -262,6 +286,7 @@ npm install && npm run build
 ## 🐛 Issues and Support
 
 ### Reporting Issues
+
 If you encounter any problems:
 
 1. **Check existing issues** on [GitHub Issues](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
@@ -272,6 +297,7 @@ If you encounter any problems:
    - VS Code version and OS information
 
 ### Getting Help
+
 - 📖 Check our documentation
 - 💬 Join discussions in GitHub Issues
 - 📧 Contact us at contact.rizkykurniawan@gmail.com
@@ -289,6 +315,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Special Thanks
 
 **Built with amazing open source tools:**
+
 - 🎯 [DBML Community](https://dbml.dbdiagram.io/) - Database Markup Language specification
 - ⚛️ [React Flow](https://reactflow.dev/) - Interactive diagram library
 - 🔧 [VS Code API](https://code.visualstudio.com/api) - Robust extension platform
@@ -298,7 +325,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ✅ **Zero Configuration** - Works instantly with any DBML file  
 ✅ **Lightning Fast** - Optimized for performance and responsiveness  
 ✅ **Professional Quality** - Production-ready with enterprise features  
-✅ **Community Driven** - Built with real developer feedback  
+✅ **Community Driven** - Built with real developer feedback
 
 ---
 
@@ -308,6 +335,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by [Rizky Kurniawan](https://github.com/kykurniawan)**
 
-*"From DBML text to visual database understanding in seconds"*
+_"From DBML text to visual database understanding in seconds"_
 
 </div>

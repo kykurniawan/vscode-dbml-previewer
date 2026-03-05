@@ -36,6 +36,8 @@ import {
   cleanupObsoletePositions,
   applyPersistedLayout,
 } from '../utils/layoutStorage';
+import { darkenHexColor } from '../utils/colorUtils';
+import CustomEdge from './CustomEdge';
 
 const nodeTypes = {
   table: TableNode,
@@ -43,6 +45,10 @@ const nodeTypes = {
   column: ColumnNode,
   tableGroup: TableGroupNode,
   stickyNote: StickyNote,
+};
+
+const edgeTypes = {
+  custom: CustomEdge,
 };
 
 // Component that handles table navigation within React Flow context
@@ -134,6 +140,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [currentTheme, setCurrentTheme] = useState({});
   const [inheritThemeStyle, setInheritThemeStyle] = useState(true);
   const [edgeType, setEdgeType] = useState('smoothstep');
+  const [showCardinalityLabels, setShowCardinalityLabels] = useState(false);
   const [exportQuality, setExportQuality] = useState(0.95);
   const [exportBackground, setExportBackground] = useState(true);
   const [exportPadding, setExportPadding] = useState(20);
@@ -556,13 +563,13 @@ const DBMLPreview = ({ initialContent }) => {
       window.vscode.postMessage({ type: 'clearLayout' });
       // Trigger re-transform with empty positions
       if (dbmlData) {
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick, showCardinalityLabels);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
       }
     }
-  }, [fileId, dbmlData, edgeType, tableChecks, setNodes, setEdges, handleColumnClick, handleTableNoteClick, handleTableChecksClick]);
+  }, [fileId, dbmlData, edgeType, showCardinalityLabels, tableChecks, setNodes, setEdges, handleColumnClick, handleTableNoteClick, handleTableChecksClick]);
 
   // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
@@ -750,6 +757,9 @@ const DBMLPreview = ({ initialContent }) => {
     const initialEdgeType = window.edgeType !== undefined
       ? window.edgeType
       : 'smoothstep';
+    const initialShowCardinalityLabels = window.showCardinalityLabels !== undefined
+      ? window.showCardinalityLabels
+      : false;
     const initialExportQuality = window.exportQuality !== undefined
       ? window.exportQuality
       : 0.95;
@@ -762,6 +772,7 @@ const DBMLPreview = ({ initialContent }) => {
 
     setInheritThemeStyle(initialInheritThemeStyle);
     setEdgeType(initialEdgeType);
+    setShowCardinalityLabels(initialShowCardinalityLabels);
     setExportQuality(initialExportQuality);
     setExportBackground(initialExportBackground);
     setExportPadding(initialExportPadding);
@@ -810,6 +821,9 @@ const DBMLPreview = ({ initialContent }) => {
           if (message.edgeType !== undefined) {
             setEdgeType(message.edgeType);
           }
+          if (message.showCardinalityLabels !== undefined) {
+            setShowCardinalityLabels(message.showCardinalityLabels);
+          }
           if (message.exportQuality !== undefined) {
             setExportQuality(message.exportQuality);
           }
@@ -828,6 +842,9 @@ const DBMLPreview = ({ initialContent }) => {
           }
           if (message.edgeType !== undefined) {
             setEdgeType(message.edgeType);
+          }
+          if (message.showCardinalityLabels !== undefined) {
+            setShowCardinalityLabels(message.showCardinalityLabels);
           }
           if (message.exportQuality !== undefined) {
             setExportQuality(message.exportQuality);
@@ -895,7 +912,7 @@ const DBMLPreview = ({ initialContent }) => {
           saveLayout(fileId, cleanedPositions);
         }
 
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick, showCardinalityLabels);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
@@ -903,7 +920,7 @@ const DBMLPreview = ({ initialContent }) => {
         console.error('Error transforming DBML data:', error);
       }
     }
-  }, [dbmlData, fileId, edgeType, tableChecks, setNodes, setEdges]);
+  }, [dbmlData, fileId, edgeType, showCardinalityLabels, tableChecks, setNodes, setEdges]);
 
   // Update edge styles based on selection state
   useEffect(() => {
@@ -915,17 +932,26 @@ const DBMLPreview = ({ initialContent }) => {
         const currentStrokeWidth = edge.style?.strokeWidth;
         const currentDashArray = edge.style?.strokeDasharray;
         const currentAnimated = edge.animated;
+        const currentZIndex = edge.zIndex;
+        const currentDataSelected = edge.data?.isSelected;
 
-        const expectedStroke = isSelected ? getThemeVar('focusBorder') : getThemeVar('chartsLines');
+        const baseStroke = edge.data?.refColor ? darkenHexColor(edge.data.refColor) : getThemeVar('chartsLines');
+        const expectedStroke = isSelected ? getThemeVar('focusBorder') : baseStroke;
         const expectedStrokeWidth = isSelected ? 3 : 2;
         const expectedDashArray = isSelected ? '5 5' : '0';
         const expectedAnimated = isSelected;
+        const expectedZIndex = isSelected ? 1001 : 0;
 
         // Only update if the style has actually changed
-        if (currentStroke !== expectedStroke || currentStrokeWidth !== expectedStrokeWidth || currentDashArray !== expectedDashArray || currentAnimated !== expectedAnimated) {
+        if (currentStroke !== expectedStroke || currentStrokeWidth !== expectedStrokeWidth || currentDashArray !== expectedDashArray || currentAnimated !== expectedAnimated || currentZIndex !== expectedZIndex || currentDataSelected !== isSelected) {
           return {
             ...edge,
             animated: expectedAnimated,
+            zIndex: expectedZIndex,
+            data: {
+              ...edge.data,
+              isSelected,
+            },
             style: {
               ...edge.style,
               stroke: expectedStroke,
@@ -1022,6 +1048,7 @@ const DBMLPreview = ({ initialContent }) => {
         onEdgeClick={onEdgeClick}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
         onInit={(instance) => { reactFlowRef.current = instance; }}
         attributionPosition="bottom-left"

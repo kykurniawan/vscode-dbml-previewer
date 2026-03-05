@@ -195,6 +195,7 @@ function createPreviewPanel(context, filePath, content) {
 	const config = vscode.workspace.getConfiguration('diagram');
 	const inheritThemeStyle = config.get('inheritThemeStyle', true);
 	const edgeType = config.get('edgeType', 'smoothstep');
+	const showCardinalityLabels = config.get('showCardinalityLabels', false);
 	const exportQuality = config.get('exportQuality', 0.95);
 	const exportBackground = config.get('exportBackground', true);
 	const exportPadding = config.get('exportPadding', 20);
@@ -206,7 +207,7 @@ function createPreviewPanel(context, filePath, content) {
 	}
 
 	// Set the webview content
-	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding, initialLayout);
+	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, initialLayout);
 
 	// Debounce state for layout file writes
 	let layoutSaveTimer = null;
@@ -227,10 +228,12 @@ function createPreviewPanel(context, filePath, content) {
 					const currentExportQuality = currentConfig.get('exportQuality', 0.95);
 					const currentExportBackground = currentConfig.get('exportBackground', true);
 					const currentExportPadding = currentConfig.get('exportPadding', 20);
+					const currentShowCardinalityLabels = currentConfig.get('showCardinalityLabels', false);
 					panel.webview.postMessage({
 						type: 'configuration',
 						inheritThemeStyle: currentInheritThemeStyle,
 						edgeType: currentEdgeType,
+						showCardinalityLabels: currentShowCardinalityLabels,
 						exportQuality: currentExportQuality,
 						exportBackground: currentExportBackground,
 						exportPadding: currentExportPadding
@@ -260,12 +263,14 @@ function createPreviewPanel(context, filePath, content) {
 	const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
 		if (event.affectsConfiguration('diagram.inheritThemeStyle') ||
 		    event.affectsConfiguration('diagram.edgeType') ||
+		    event.affectsConfiguration('diagram.showCardinalityLabels') ||
 		    event.affectsConfiguration('diagram.exportQuality') ||
 		    event.affectsConfiguration('diagram.exportBackground') ||
 		    event.affectsConfiguration('diagram.exportPadding')) {
 			const config = vscode.workspace.getConfiguration('diagram');
 			const inheritThemeStyle = config.get('inheritThemeStyle', true);
 			const edgeType = config.get('edgeType', 'smoothstep');
+			const showCardinalityLabels = config.get('showCardinalityLabels', false);
 			const exportQuality = config.get('exportQuality', 0.95);
 			const exportBackground = config.get('exportBackground', true);
 			const exportPadding = config.get('exportPadding', 20);
@@ -273,6 +278,7 @@ function createPreviewPanel(context, filePath, content) {
 				type: 'configurationChanged',
 				inheritThemeStyle: inheritThemeStyle,
 				edgeType: edgeType,
+				showCardinalityLabels: showCardinalityLabels,
 				exportQuality: exportQuality,
 				exportBackground: exportBackground,
 				exportPadding: exportPadding
@@ -331,13 +337,14 @@ function createPreviewPanel(context, filePath, content) {
  * @param {vscode.Webview} webview
  * @param {boolean} inheritThemeStyle
  * @param {string} edgeType
+ * @param {boolean} showCardinalityLabels
  * @param {number} exportQuality
  * @param {boolean} exportBackground
  * @param {number} exportPadding
  * @param {Object|null} initialLayout
  * @returns {string}
  */
-function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding, initialLayout = null) {
+function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, initialLayout = null) {
 	// Get the local path to main script run in the webview
 	const scriptPathOnDisk = vscode.Uri.file(path.join(__dirname, 'dist', 'webview.js'));
 	const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -372,6 +379,7 @@ function getWebviewContent(content, fileName, filePath, webview, inheritThemeSty
 			window.filePath = ${JSON.stringify(filePath)};
 			window.inheritThemeStyle = ${JSON.stringify(inheritThemeStyle)};
 			window.edgeType = ${JSON.stringify(edgeType)};
+			window.showCardinalityLabels = ${JSON.stringify(showCardinalityLabels)};
 			window.exportQuality = ${JSON.stringify(exportQuality)};
 			window.exportBackground = ${JSON.stringify(exportBackground)};
 			window.exportPadding = ${JSON.stringify(exportPadding)};
@@ -420,6 +428,7 @@ function createBulkExportPanel(context) {
 	const config = vscode.workspace.getConfiguration('diagram');
 	const inheritThemeStyle = config.get('inheritThemeStyle', false);
 	const edgeType = config.get('edgeType', 'smoothstep');
+	const showCardinalityLabels = config.get('showCardinalityLabels', false);
 	const exportQuality = config.get('exportQuality', 0.95);
 	const exportBackground = config.get('exportBackground', true);
 	const exportPadding = config.get('exportPadding', 20);
@@ -435,7 +444,7 @@ function createBulkExportPanel(context) {
 		}
 	);
 
-	panel.webview.html = getWebviewContent('', 'bulk-export', '', panel.webview, inheritThemeStyle, edgeType, exportQuality, exportBackground, exportPadding);
+	panel.webview.html = getWebviewContent('', 'bulk-export', '', panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding);
 
 	panel.webview.onDidReceiveMessage(
 		message => handleBulkWebviewMessage(message, panel),
@@ -472,6 +481,7 @@ function handleBulkWebviewMessage(message, panel) {
 			type: 'configuration',
 			inheritThemeStyle: cfg.get('inheritThemeStyle', false),
 			edgeType: cfg.get('edgeType', 'smoothstep'),
+			showCardinalityLabels: cfg.get('showCardinalityLabels', false),
 			exportQuality: cfg.get('exportQuality', 0.95),
 			exportBackground: cfg.get('exportBackground', true),
 			exportPadding: cfg.get('exportPadding', 20)

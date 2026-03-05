@@ -32,7 +32,7 @@ const TableNode = ({ data }) => {
       minWidth: '200px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       overflow: 'hidden',
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
     }}>
       {/* Table Header */}
       <div style={{
@@ -45,7 +45,7 @@ const TableNode = ({ data }) => {
         borderBottom: `1px solid ${getThemeVar('panelBorder')}`,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
       }}>
         <span>{table.name}</span>
         {table.note && (

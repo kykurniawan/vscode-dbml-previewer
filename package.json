@@ -186,18 +186,20 @@
           "default": "smoothstep",
           "enum": [
             "straight",
-            "step",
             "smoothstep",
             "bezier"
           ],
           "enumDescriptions": [
-            "Default React Flow edge with curves",
             "Straight line between nodes",
-            "Step-style edge with right angles",
             "Smooth step edge with rounded corners",
             "Bezier curve edge"
           ],
           "description": "The type of edge/connection lines to use for table relationships in the diagram."
+        },
+        "diagram.showCardinalityLabels": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show cardinality labels (0, 1, N) on relationship edges in the diagram. 0 = nullable one-side, 1 = non-nullable one-side, N = many-side."
         },
         "diagram.exportQuality": {
           "type": "number",

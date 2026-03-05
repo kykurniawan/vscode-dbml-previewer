@@ -93,3 +93,19 @@ export const parseHeaderColor = (headerColor) => {
 
   return headerColor;
 };
+
+/**
+ * Darkens a hex color by reducing each RGB channel by a given factor
+ * @param {string} hex - Hex color string (e.g., "#E74C3C")
+ * @param {number} amount - Amount to darken (0-1, default 0.15)
+ * @returns {string} - Darkened hex color, or original if invalid
+ */
+export const darkenHexColor = (hex, amount = 0.15) => {
+  if (!isValidHexColor(hex)) {
+    return hex;
+  }
+  const { r, g, b } = hexToRgb(hex);
+  const darken = (channel) => Math.max(0, Math.round(channel * (1 - amount)));
+  const toHex = (channel) => darken(channel).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
