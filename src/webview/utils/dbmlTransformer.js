@@ -1,5 +1,6 @@
 import dagre from 'dagre';
 import { getThemeVar } from '../styles/themeManager.js';
+import { parseHeaderColor, darkenHexColor } from './colorUtils.js';
 
 /**
  * Calculate the width needed for a column based on its content
@@ -209,7 +210,7 @@ const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, edgeType = 'smoothstep', tableChecks = {}, onTableChecksClick = null) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, edgeType = 'smoothstep', tableChecks = {}, onTableChecksClick = null, showCardinalityLabels = false) => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
@@ -305,6 +306,18 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
   const tableGroups = allTableGroups;
   const notes = allNotes;
 
+  // Build column lookup map: tableName -> columnName -> column object
+  const columnLookup = {};
+  tables.forEach(table => {
+    const tableKey = table.fullName || table.name;
+    columnLookup[tableKey] = {};
+    if (table.fields) {
+      table.fields.forEach(field => {
+        columnLookup[tableKey][field.name] = field;
+      });
+    }
+  });
+
   // Create table-to-group mapping
   const tableToGroupMap = {};
   tableGroups.forEach(group => {
@@ -334,6 +347,7 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
       id: `table-${table.fullName}`,
       type: 'tableHeader',
       position: { x: 0, y: 0 }, // Will be calculated by layout
+      zIndex: 10,
       data: {
         table: { ...table, checks },
         columnCount,
@@ -434,6 +448,15 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
           const targetRelation = targetEndpoint.relation || '1';
           const cardinality = `${sourceRelation}:${targetRelation}`;
 
+          // Determine nullability for label display (0 vs 1)
+          const sourceColumn = columnLookup[sourceTable]?.[sourceField];
+          const targetColumn = columnLookup[targetTable]?.[targetField];
+          const sourceIsNullable = sourceColumn ? !sourceColumn.not_null : false;
+          const targetIsNullable = targetColumn ? !targetColumn.not_null : false;
+
+          // Determine edge color from ref
+          const refColor = parseHeaderColor(ref.color);
+          const edgeStroke = refColor ? darkenHexColor(refColor) : getThemeVar('chartsLines');
 
           edges.push({
             id: `${sourceTable}.${sourceField}-${targetTable}.${targetField}-${index}-${fieldIndex}`,
@@ -441,11 +464,11 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
             target: `${targetTable}.${targetField}`,
             sourceHandle: 'source',
             targetHandle: 'target',
-            type: edgeType,
+            type: 'custom',
             animated: false,
             selectable: true,
             style: {
-              stroke: getThemeVar('chartsLines'),
+              stroke: edgeStroke,
               strokeWidth: 2,
               strokeDasharray: '0',
             },
@@ -457,7 +480,12 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
               sourceRelation,
               targetRelation,
               cardinality,
-              fullRelationshipText: `${sourceTable}.${sourceField} → ${targetTable}.${targetField}`
+              fullRelationshipText: `${sourceTable}.${sourceField} → ${targetTable}.${targetField}`,
+              sourceIsNullable,
+              targetIsNullable,
+              refColor,
+              pathStyle: edgeType,
+              showCardinalityLabels,
             }
           });
         }

@@ -199,6 +199,11 @@
           ],
           "description": "The type of edge/connection lines to use for table relationships in the diagram."
         },
+        "diagram.showCardinalityLabels": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show cardinality labels (0, 1, N) on relationship edges in the diagram. 0 = nullable one-side, 1 = non-nullable one-side, N = many-side."
+        },
         "diagram.exportQuality": {
           "type": "number",
           "default": 0.95,
