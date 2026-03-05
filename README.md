@@ -14,28 +14,22 @@ Perfect for database architects, developers, and anyone working with database sc
 
 ## 🌟 What's New
 
-### v1.3.0 - Navigation Enhancement Release
+### v1.4.0 - Layout & Export Enhancement Release
+
+- 💾 **Persistent Layout**: Table positions are saved to a JSON file and restored automatically across sessions
+- 📦 **Bulk Export**: Export all DBML files in a folder to PNG or SVG at once
+- 🏷️ **Cardinality Labels**: Show 0/1/N labels on relationship edges (toggle via `diagram.showCardinalityLabels`)
+- ✅ **CHECK Keyword Support**: Full support for DBML `check` column constraint
+- 🎨 **Relationship Line Colors**: Custom colors on relationship lines
+
+### Previous Updates
+
+#### v1.3.0 - Navigation Enhancement Release
 
 - 🔗 **Clickable Table Names in Tooltips**: Navigate instantly by clicking table names in relationship tooltips
 - 🔍 **Enhanced Zoom Navigation**: Improved zoom level (1.5x) when navigating to tables for better visibility
 - ✨ **Interactive Relationships**: Hover and click table names with VS Code theme-aware styling
 - 🎯 **Smoother Navigation**: Better focus and readability when jumping between related tables
-
-### Previous Updates
-
-#### v1.2.0 - Color Customization
-
-- 🎨 **Custom Table Colors**: Use `headercolor` property to customize individual table header colors
-- 🌈 **Custom Group Colors**: Apply custom colors to table groups with the `color` property
-- ♿ **Smart Text Contrast**: Automatic white/black text selection based on background brightness
-- ✅ **WCAG Compliance**: Accessible color contrast ratios for all custom colors
-
-#### v1.1.0 - Export Features
-
-- 📤 **Export to PNG/SVG**: Save your diagrams as high-quality images
-- 🎛️ **Export Configuration**: Customize image quality, background, and padding
-- ⌨️ **Multiple Access Points**: Export via UI buttons or VSCode commands
-- 🖼️ **Professional Output**: High-resolution exports with transparent background option
 
 ## ⚡ Key Features
 
@@ -168,6 +162,7 @@ This extension supports the full DBML specification including:
 - ✅ **Indexes** (simple and composite)
 - ✅ **Table Groups** for schema organization
 - ✅ **Custom Colors** for tables (`headercolor`) and groups (`color`)
+- ✅ **CHECK Constraints** - Column-level check constraint support
 - ✅ **Multi-schema** database support
 - ✅ **Default Values** and **Auto-increment** fields
 
@@ -204,6 +199,13 @@ The extension works out of the box with sensible defaults and includes the follo
   - When disabled, uses a clean light theme optimized for diagram readability
   - Prevents issues with poorly designed VS Code themes
 
+### Cardinality Configuration
+
+- **`diagram.showCardinalityLabels`** (boolean, default: `false`)
+  - Show cardinality labels (0, 1, N) on relationship edges
+  - `0` = nullable one-side, `1` = non-nullable one-side, `N` = many-side
+  - Useful for quickly reading relationship multiplicities without opening tooltips
+
 ### Edge Type Configuration
 
 - **`diagram.edgeType`** (string, default: `"smoothstep"`)
@@ -230,6 +232,11 @@ The extension works out of the box with sensible defaults and includes the follo
   - Range: 0-100 pixels
   - Provides visual breathing room around your diagram
 
+- **`diagram.bulkExport.outputFolder`** (string, default: `""`)
+  - Path to the folder where bulk-exported files will be saved
+  - Relative paths resolve from the workspace root
+  - Leave empty to save into a `dbml-exports` subfolder inside the source folder
+
 ### How to Configure
 
 1. Open VS Code Settings (`Ctrl+,` / `Cmd+,`)
@@ -252,6 +259,24 @@ The extension works out of the box with sensible defaults and includes the follo
 2. Search for "Export Diagram to PNG" or "Export Diagram to SVG"
 3. Execute the command
 4. Image downloads automatically
+
+### How to Bulk Export
+
+**Via Explorer context menu (recommended):**
+
+1. Right-click any folder in the VS Code Explorer panel
+2. Select "Bulk Export DBML Files to PNG" or "Bulk Export DBML Files to SVG"
+3. All `.dbml` files in the folder are exported automatically
+
+**Via Keyboard Shortcuts:**
+
+- `Ctrl+Shift+Alt+E` / `Cmd+Shift+Alt+E`: Bulk export to PNG
+- `Ctrl+Shift+Alt+S` / `Cmd+Shift+Alt+S`: Bulk export to SVG
+
+**Via Command Palette:**
+
+1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+2. Search for "Bulk Export DBML Files to PNG" or "Bulk Export DBML Files to SVG"
 
 ### Future Configuration Options
 

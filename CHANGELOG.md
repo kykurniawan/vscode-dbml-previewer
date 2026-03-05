@@ -2,6 +2,22 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 1.4.0
+
+### Added
+- **Cardinality Labels**: New `diagram.showCardinalityLabels` setting to display 0, 1, or N labels on relationship edges
+  - Shows nullable one-side (0), non-nullable one-side (1), and many-side (N)
+  - Toggle via VS Code settings (default: false)
+- **Persistent Layout**: Table positions are now saved to a JSON file and automatically restored when reopening diagrams
+  - Layout persists across VS Code sessions
+  - Positions saved per DBML file
+- **Bulk Export**: Export all DBML files in a folder to PNG or SVG in one operation
+  - Right-click any folder in Explorer → "Bulk Export DBML Files to PNG" or "Bulk Export DBML Files to SVG"
+  - Keyboard shortcuts: `Ctrl+Shift+Alt+E` (PNG) and `Ctrl+Shift+Alt+S` (SVG)
+  - New `diagram.bulkExport.outputFolder` setting to configure the output directory
+- **CHECK Keyword Support**: DBML `check` column constraint is now fully supported and displayed in diagrams
+- **Relationship Line Colors**: Support for custom colors on relationship lines
+
 ## 1.3.3
 
 ### Fixed
