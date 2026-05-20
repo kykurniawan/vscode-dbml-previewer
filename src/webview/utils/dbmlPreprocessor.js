@@ -45,7 +45,7 @@ const extractBaseTableName = (rawName) => {
 const findLastTableName = (contentBefore) => {
   const matches = [
     ...contentBefore.matchAll(
-      /\bTable\s+(?:"[^"]*"\.)?"?([\w$]+)"?[^{]*\{/gi
+      /\bTable\s+(?:(?:"[^"]*"|[\w$]+)\.)?"?([\w$]+)"?[^{]*\{/gi
     ),
   ];
   if (matches.length === 0) return null;
