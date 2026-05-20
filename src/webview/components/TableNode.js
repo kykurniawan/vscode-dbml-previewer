@@ -9,6 +9,7 @@ const TableNode = ({ data }) => {
     if (column.pk) return '🔑';
     if (column.unique) return '⚡';
     if (column.not_null) return '❗';
+    if (column.hasIndex) return '🔍';
     return ''; // Remove the bullet point
   };
 

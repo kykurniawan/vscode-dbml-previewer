@@ -342,6 +342,20 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
     const tableGroup = tableToGroupMap[table.name];
     const checks = tableChecks[table.name] || [];
 
+    // Collect indexed column names
+    const indexedColumnNames = new Set();
+    if (table.indexes) {
+      table.indexes.forEach(index => {
+        if (index.columns) {
+          index.columns.forEach(col => {
+            if (col.type === 'column' && col.value) {
+              indexedColumnNames.add(col.value);
+            }
+          });
+        }
+      });
+    }
+
     // Create table header node (parent) with schema-aware ID
     const tableHeaderNode = {
       id: `table-${table.fullName}`,
@@ -373,6 +387,11 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
       // Check if this column type is an enum
       const columnTypeName = column.type?.type_name;
       const enumDef = columnTypeName ? findEnumForType(columnTypeName, allEnums) : null;
+      
+      // Attach hasIndex flag to column object directly
+      if (indexedColumnNames.has(column.name)) {
+        column.hasIndex = true;
+      }
       
       const columnNode = {
         id: `${table.fullName}.${column.name}`,
