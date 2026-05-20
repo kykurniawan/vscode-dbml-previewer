@@ -210,7 +210,7 @@ const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, edgeType = 'smoothstep', tableChecks = {}, onTableChecksClick = null, showCardinalityLabels = false) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, edgeType = 'smoothstep', tableChecks = {}, onTableChecksClick = null, showCardinalityLabels = false, onTableIndexesClick = null) => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
@@ -363,7 +363,7 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
       position: { x: 0, y: 0 }, // Will be calculated by layout
       zIndex: 10,
       data: {
-        table: { ...table, checks },
+        table: { ...table, checks, indexes: table.indexes || [] },
         columnCount,
         tableWidth,
         hasMultipleSchema,
@@ -371,6 +371,8 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
         onTableNoteClick,
         onTableChecksClick,
         checksCount: checks.length,
+        indexesCount: (table.indexes || []).length,
+        onTableIndexesClick,
       },
     };
     nodes.push(tableHeaderNode);
@@ -552,9 +554,10 @@ const getLayoutedElements = (nodes, edges, tableGroups = [], savedPositions = {}
   const tablePadding = 8;
   
   tableHeaderNodes.forEach((tableNode) => {
-    const { columnCount, tableWidth, checksCount = 0 } = tableNode.data;
+    const { columnCount, tableWidth, checksCount = 0, indexesCount = 0 } = tableNode.data;
     const checksFooterHeight = checksCount > 0 ? 32 : 0;
-    const totalHeight = headerHeight + (columnCount * columnHeight) + (tablePadding * 2) + checksFooterHeight;
+    const indexesFooterHeight = indexesCount > 0 ? 32 : 0;
+    const totalHeight = headerHeight + (columnCount * columnHeight) + (tablePadding * 2) + checksFooterHeight + indexesFooterHeight;
 
     tableDimensions[tableNode.id] = {
       width: tableWidth,

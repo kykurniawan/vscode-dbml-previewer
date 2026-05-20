@@ -22,6 +22,7 @@ import EdgeTooltip from './EdgeTooltip';
 import ColumnTooltip from './ColumnTooltip';
 import TableNoteTooltip from './TableNoteTooltip';
 import TableChecksTooltip from './TableChecksTooltip';
+import TableIndexesTooltip from './TableIndexesTooltip';
 import StickyNote from './StickyNote';
 import ErrorDisplay from './ErrorDisplay';
 import TableNavigationDropdown from './TableNavigationDropdown';
@@ -132,6 +133,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [columnTooltipData, setColumnTooltipData] = useState(null);
   const [tableNoteTooltipData, setTableNoteTooltipData] = useState(null);
   const [tableChecksTooltipData, setTableChecksTooltipData] = useState(null);
+  const [tableIndexesTooltipData, setTableIndexesTooltipData] = useState(null);
   const [tableGroups, setTableGroups] = useState([]);
   const [draggedGroupPositions, setDraggedGroupPositions] = useState(new Map());
   const [fileId, setFileId] = useState(null);
@@ -398,6 +400,7 @@ const DBMLPreview = ({ initialContent }) => {
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
     setTableNoteTooltipData(null);
+    setTableIndexesTooltipData(null);
 
     // Open column tooltip
     setColumnTooltipData({
@@ -413,6 +416,7 @@ const DBMLPreview = ({ initialContent }) => {
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
     setColumnTooltipData(null);
+    setTableIndexesTooltipData(null);
 
     // Open table note tooltip
     setTableNoteTooltipData({
@@ -438,12 +442,28 @@ const DBMLPreview = ({ initialContent }) => {
     setSelectedEdgeIds(new Set());
     setColumnTooltipData(null);
     setTableNoteTooltipData(null);
+    setTableIndexesTooltipData(null);
     setTableChecksTooltipData({ table, checks, position });
   }, []);
 
   // Handle checks tooltip close
   const handleCloseTableChecksTooltip = useCallback(() => {
     setTableChecksTooltipData(null);
+  }, []);
+
+  // Handle indexes button click for tooltip display
+  const handleTableIndexesClick = useCallback((table, indexes, position) => {
+    setTooltipData(null);
+    setSelectedEdgeIds(new Set());
+    setColumnTooltipData(null);
+    setTableNoteTooltipData(null);
+    setTableChecksTooltipData(null);
+    setTableIndexesTooltipData({ table, indexes, position });
+  }, []);
+
+  // Handle indexes tooltip close
+  const handleCloseTableIndexesTooltip = useCallback(() => {
+    setTableIndexesTooltipData(null);
   }, []);
 
 
@@ -455,6 +475,8 @@ const DBMLPreview = ({ initialContent }) => {
         setSelectedEdgeIds(new Set());
         setColumnTooltipData(null);
         setTableNoteTooltipData(null);
+        setTableChecksTooltipData(null);
+        setTableIndexesTooltipData(null);
       }
     };
 
@@ -468,6 +490,8 @@ const DBMLPreview = ({ initialContent }) => {
         setSelectedEdgeIds(new Set());
         setColumnTooltipData(null);
         setTableNoteTooltipData(null);
+        setTableChecksTooltipData(null);
+        setTableIndexesTooltipData(null);
       }
     };
 
@@ -502,11 +526,17 @@ const DBMLPreview = ({ initialContent }) => {
         groupTables.forEach(tableNode => {
           const { x, y } = tableNode.position;
           const tableWidth = tableNode.data.tableWidth || 200;
+          const checksCount = tableNode.data.checksCount || 0;
+          const indexesCount = tableNode.data.indexesCount || 0;
+          const checksFooterHeight = checksCount > 0 ? 32 : 0;
+          const indexesFooterHeight = indexesCount > 0 ? 32 : 0;
           const tableHeight =
             42 + // header height
             (tableNode.data.table?.note ? 30 : 0) + // note height
             (tableNode.data.columnCount * 30) + // columns height
-            16; // padding
+            16 + // padding
+            checksFooterHeight +
+            indexesFooterHeight;
 
           minX = Math.min(minX, x);
           minY = Math.min(minY, y);
@@ -563,13 +593,13 @@ const DBMLPreview = ({ initialContent }) => {
       window.vscode.postMessage({ type: 'clearLayout' });
       // Trigger re-transform with empty positions
       if (dbmlData) {
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick, showCardinalityLabels);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, {}, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick, showCardinalityLabels, handleTableIndexesClick);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
       }
     }
-  }, [fileId, dbmlData, edgeType, showCardinalityLabels, tableChecks, setNodes, setEdges, handleColumnClick, handleTableNoteClick, handleTableChecksClick]);
+  }, [fileId, dbmlData, edgeType, showCardinalityLabels, tableChecks, setNodes, setEdges, handleColumnClick, handleTableNoteClick, handleTableChecksClick, handleTableIndexesClick]);
 
   // Custom nodes change handler that handles TableGroup dragging
   const handleNodesChange = useCallback((changes) => {
@@ -912,7 +942,7 @@ const DBMLPreview = ({ initialContent }) => {
           saveLayout(fileId, cleanedPositions);
         }
 
-        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick, showCardinalityLabels);
+        const { nodes: newNodes, edges: newEdges, tableGroups: newTableGroups } = transformDBMLToNodes(dbmlData, cleanedPositions, handleColumnClick, handleTableNoteClick, edgeType, tableChecks, handleTableChecksClick, showCardinalityLabels, handleTableIndexesClick);
         setNodes(newNodes);
         setEdges(newEdges);
         setTableGroups(newTableGroups || []);
@@ -1198,6 +1228,15 @@ const DBMLPreview = ({ initialContent }) => {
           checks={tableChecksTooltipData.checks}
           position={tableChecksTooltipData.position}
           onClose={handleCloseTableChecksTooltip}
+        />
+      )}
+
+      {tableIndexesTooltipData && (
+        <TableIndexesTooltip
+          table={tableIndexesTooltipData.table}
+          indexes={tableIndexesTooltipData.indexes}
+          position={tableIndexesTooltipData.position}
+          onClose={handleCloseTableIndexesTooltip}
         />
       )}
     </div>
