@@ -14,13 +14,11 @@ Perfect for database architects, developers, and anyone working with database sc
 
 ## 🌟 What's New
 
-### v1.4.0 - Layout & Export Enhancement Release
+### v1.5.0 - Index Support Release
 
-- 💾 **Persistent Layout**: Table positions are saved to a JSON file and restored automatically across sessions
-- 📦 **Bulk Export**: Export all DBML files in a folder to PNG or SVG at once
-- 🏷️ **Cardinality Labels**: Show 0/1/N labels on relationship edges (toggle via `diagram.showCardinalityLabels`)
+- 🔍 **Indexes Support**: Tables with `indexes { ... }` blocks now show indexes in a popup with name, type, columns, and badges (PK, unique)
+- 🐛 **Checks Fix**: Table-level checks now display correctly when the schema name is unquoted
 - ✅ **CHECK Keyword Support**: Full support for DBML `check` column constraint
-- 🎨 **Relationship Line Colors**: Custom colors on relationship lines
 
 ## ⚡ Key Features
 
@@ -153,7 +151,7 @@ This extension supports the full DBML specification including:
 - ✅ **Indexes** (simple and composite)
 - ✅ **Table Groups** for schema organization
 - ✅ **Custom Colors** for tables (`headercolor`) and groups (`color`)
-- ✅ **CHECK Constraints** - Column-level check constraint support
+- ✅ **CHECK Constraints** - Table-level and column-level check constraint support
 - ✅ **Multi-schema** database support
 - ✅ **Default Values** and **Auto-increment** fields
 
