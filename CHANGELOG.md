@@ -2,6 +2,17 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 1.5.0
+
+### Added
+- **Indexes Support**: Tables with `indexes { ... }` blocks now display an "🔍 View Indexes" button at the bottom of the table
+  - Click to open a detailed popup showing all indexes with their name, type, uniqueness, columns, and notes
+  - Badges for primary key (PK), unique, and index type (e.g. btree)
+  - Works alongside existing checks support with proper footer stacking
+
+### Fixed
+- **Checks not showing with unquoted schema names**: Fixed an issue where table-level checks were not displayed when the schema name was not enclosed in double quotes (e.g. `Table Schema.TableName` vs `Table "Schema".TableName`)
+
 ## 1.4.0
 
 ### Added

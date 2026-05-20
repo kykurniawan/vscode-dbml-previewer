@@ -10,8 +10,10 @@ const TableHeaderNode = ({ data }) => {
     hasMultipleSchema = false,
     onTableNoteClick,
     onTableChecksClick,
+    onTableIndexesClick,
   } = data;
   const checks = table.checks || [];
+  const indexes = table.indexes || [];
 
   // Calculate dimensions based on content
   const headerHeight = 42; // Header section height
@@ -19,7 +21,9 @@ const TableHeaderNode = ({ data }) => {
   const tablePadding = 8; // Padding around column area
   // Fixed-height footer for the "View Checks" button when checks are present
   const checksFooterHeight = checks.length > 0 ? 32 : 0;
-  const totalHeight = headerHeight + (columnCount * columnHeight) + (tablePadding * 2) + checksFooterHeight;
+  // Fixed-height footer for the "View Indexes" button when indexes are present
+  const indexesFooterHeight = indexes.length > 0 ? 32 : 0;
+  const totalHeight = headerHeight + (columnCount * columnHeight) + (tablePadding * 2) + checksFooterHeight + indexesFooterHeight;
 
   let title = table.name;
   if (hasMultipleSchema && table.schemaName) {
@@ -97,8 +101,8 @@ const TableHeaderNode = ({ data }) => {
           borderTop: `1px solid ${getThemeVar('panelBorder')}`,
           borderLeft: `2px solid ${getThemeVar('panelBorder')}`,
           borderRight: `2px solid ${getThemeVar('panelBorder')}`,
-          borderBottom: checks.length > 0 ? 'none' : `2px solid ${getThemeVar('panelBorder')}`,
-          borderRadius: checks.length > 0 ? '0' : '0 0 8px 8px',
+          borderBottom: (checks.length > 0 || indexes.length > 0) ? 'none' : `2px solid ${getThemeVar('panelBorder')}`,
+          borderRadius: (checks.length > 0 || indexes.length > 0) ? '0' : '0 0 8px 8px',
           background: getThemeVar('editorBackground'),
           height: `${columnCount * columnHeight + (tablePadding * 2)}px`,
           boxSizing: 'border-box'
@@ -112,9 +116,9 @@ const TableHeaderNode = ({ data }) => {
         <div style={{
           borderLeft: `2px solid ${getThemeVar('panelBorder')}`,
           borderRight: `2px solid ${getThemeVar('panelBorder')}`,
-          borderBottom: `2px solid ${getThemeVar('panelBorder')}`,
+          borderBottom: indexes.length > 0 ? 'none' : `2px solid ${getThemeVar('panelBorder')}`,
           borderTop: `1px solid ${getThemeVar('panelBorder')}`,
-          borderRadius: '0 0 8px 8px',
+          borderRadius: indexes.length > 0 ? '0' : '0 0 8px 8px',
           background: getThemeVar('editorBackground'),
           height: `${checksFooterHeight}px`,
           boxSizing: 'border-box',
@@ -147,6 +151,50 @@ const TableHeaderNode = ({ data }) => {
             title="View check constraints"
           >
             ✓ View Checks ({checks.length})
+          </button>
+        </div>
+      )}
+
+      {/* Indexes Footer — shows a compact button to open the indexes tooltip */}
+      {indexes.length > 0 && (
+        <div style={{
+          borderLeft: `2px solid ${getThemeVar('panelBorder')}`,
+          borderRight: `2px solid ${getThemeVar('panelBorder')}`,
+          borderBottom: `2px solid ${getThemeVar('panelBorder')}`,
+          borderTop: `1px solid ${getThemeVar('panelBorder')}`,
+          borderRadius: '0 0 8px 8px',
+          background: getThemeVar('editorBackground'),
+          height: `${indexesFooterHeight}px`,
+          boxSizing: 'border-box',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 8px',
+        }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onTableIndexesClick) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                onTableIndexesClick(table, indexes, {
+                  x: rect.right + 10,
+                  y: rect.top,
+                });
+              }
+            }}
+            style={{
+              background: 'none',
+              border: `1px solid ${getThemeVar('panelBorder')}`,
+              borderRadius: '4px',
+              color: getThemeVar('descriptionForeground'),
+              cursor: 'pointer',
+              fontSize: '11px',
+              padding: '3px 8px',
+              width: '100%',
+              textAlign: 'left',
+            }}
+            title="View indexes"
+          >
+            🔍 View Indexes ({indexes.length})
           </button>
         </div>
       )}
