@@ -2,6 +2,15 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 1.6.0
+
+### Added
+- **Optional Relationship Syntax**: DBML's optional relationship modifier (`?` on either side of a ref operator, e.g. `>?`, `?>`, `<?`, `?<`) is now supported instead of throwing a parse error
+  - Works with all relationship types and all 3 ref syntaxes: inline field-level (`[ref: >? users.id]`), short-form (`Ref: a.b >? c.d`), and long-form (`Ref name { a.b >? c.d }`)
+
+### Fixed
+- **Multi-Schema Relationships Not Rendering**: Fixed relationships silently failing to render when a file mixes explicitly-named schemas with tables left in the default schema and the relationship is written without a schema prefix (e.g. `ref: > users.id` instead of `ref: > public.users.id`)
+
 ## 1.5.0
 
 ### Added

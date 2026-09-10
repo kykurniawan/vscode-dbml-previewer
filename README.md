@@ -14,11 +14,10 @@ Perfect for database architects, developers, and anyone working with database sc
 
 ## 🌟 What's New
 
-### v1.5.0 - Index Support Release
+### v1.6.0 - Optional Relationships Release
 
-- 🔍 **Indexes Support**: Tables with `indexes { ... }` blocks now show indexes in a popup with name, type, columns, and badges (PK, unique)
-- 🐛 **Checks Fix**: Table-level checks now display correctly when the schema name is unquoted
-- ✅ **CHECK Keyword Support**: Full support for DBML `check` column constraint
+- ❓ **Optional Relationship Syntax**: DBML's `?` relationship modifier (`>?`, `?>`, `<?`, `?<`) is now supported instead of failing to parse
+- 🐛 **Multi-Schema Relationships Fix**: Relationships between default-schema tables now render correctly in files that also use explicitly-named schemas
 
 ## ⚡ Key Features
 
@@ -145,7 +144,7 @@ This extension supports the full DBML specification including:
 
 - ✅ **Tables** with columns, types, and constraints
 - ✅ **Primary Keys** and **Foreign Keys** with visual indicators
-- ✅ **Relationships** (`>`, `<`, `-`) with proper cardinality display
+- ✅ **Relationships** (`>`, `<`, `-`, `<>`) with proper cardinality display, including the optional `?` modifier (e.g. `>?`, `?>`)
 - ✅ **Unique Constraints** and **Not Null** constraints
 - ✅ **Table Notes**
 - ✅ **Indexes** (simple and composite)
