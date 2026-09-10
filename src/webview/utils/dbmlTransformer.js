@@ -160,8 +160,12 @@ const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
     
     if (sourceEndpoint?.tableName) {
       const tableName = sourceEndpoint.tableName;
-      const schemaName = sourceEndpoint.schemaName;
-      
+      // Endpoints on an unqualified table (e.g. `ref: > users.id`) come back
+      // with schemaName === null even though the table itself resolved into
+      // the "public" schema - default it the same way table nodes are built
+      // below, or its fullName won't match the node/columnLookup keys.
+      const schemaName = sourceEndpoint.schemaName || 'public';
+
       // Build full table name directly from endpoint data
       sourceFullTableName = hasMultipleSchema && schemaName ? `${schemaName}.${tableName}` : tableName;
       
@@ -185,8 +189,9 @@ const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
     // Handle target endpoint - use schemaName directly from endpoint  
     if (targetEndpoint?.tableName) {
       const tableName = targetEndpoint.tableName;
-      const schemaName = targetEndpoint.schemaName;
-      
+      // Same default as the source endpoint above.
+      const schemaName = targetEndpoint.schemaName || 'public';
+
       // Build full table name directly from endpoint data
       const fullTableName = hasMultipleSchema && schemaName ? `${schemaName}.${tableName}` : tableName;
       const fieldNames = targetEndpoint.fieldNames || [targetEndpoint.fieldName];
@@ -454,10 +459,12 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
         const targetField = targetFieldNames[fieldIndex] || targetFieldNames[0];
 
         if (sourceField && targetField) {
-          // CRITICAL FIX: Use schemaName directly from endpoints
-          const sourceSchemaName = sourceEndpoint.schemaName;
+          // Default missing schemaName to "public" (see analyzeColumnRelationships
+          // above) so unqualified refs (`ref: > users.id`) still resolve to the
+          // same node/columnLookup keys as their schema-qualified table nodes.
+          const sourceSchemaName = sourceEndpoint.schemaName || 'public';
           const sourceTableName = sourceEndpoint.tableName;
-          const targetSchemaName = targetEndpoint.schemaName;
+          const targetSchemaName = targetEndpoint.schemaName || 'public';
           const targetTableName = targetEndpoint.tableName;
           
           // Build full table names directly from endpoint data

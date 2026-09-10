@@ -28,7 +28,7 @@ import ErrorDisplay from './ErrorDisplay';
 import TableNavigationDropdown from './TableNavigationDropdown';
 import { transformDBMLToNodes } from '../utils/dbmlTransformer';
 import { parseDBMLError, formatErrorForDisplay } from '../utils/errorParser';
-import { preprocessChecks } from '../utils/dbmlPreprocessor';
+import { preprocessChecks, preprocessOptionalRelationships } from '../utils/dbmlPreprocessor';
 import {
   saveLayout,
   loadLayout,
@@ -734,7 +734,8 @@ const DBMLPreview = ({ initialContent }) => {
     setEnhancedErrorInfo(null);
 
     try {
-      const { cleanedContent, tableChecks: extracted } = preprocessChecks(content);
+      const contentWithoutOptionalRefs = preprocessOptionalRelationships(content);
+      const { cleanedContent, tableChecks: extracted } = preprocessChecks(contentWithoutOptionalRefs);
       setTableChecks(extracted);
       const parser = new Parser();
       const parsed = parser.parse(cleanedContent, 'dbmlv2');

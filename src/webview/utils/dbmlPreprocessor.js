@@ -3,7 +3,68 @@
  * Handles DBML syntax that is not yet supported by @dbml/core:
  * - Table-level `checks { ... }` blocks
  * - Column-level `check: `expr`` inside column settings brackets
+ * - Optional relationship modifiers (`?`) on ref operators (e.g. `>?`, `?>`)
  */
+
+/**
+ * Relationship operators recognized by DBML: one-to-many (<), many-to-one (>),
+ * one-to-one (-), and many-to-many (<>). Order matters: `<>` must be tried
+ * before `<`/`>` alone so the alternation doesn't match a prefix of it.
+ */
+const REF_OPERATOR = '(?:<>|<|>|-)';
+
+/**
+ * Strips `?` optional-relationship markers from a chunk of DBML that is
+ * known to contain a ref operator (e.g. `>? users.id`, `?> users.id`).
+ * @param {string} segment
+ * @returns {string}
+ */
+const stripOptionalMarkers = (segment) =>
+  segment.replace(
+    new RegExp(`(\\?)?\\s*(${REF_OPERATOR})\\s*(\\?)?`, 'g'),
+    (match, qBefore, op) => ` ${op} `
+  );
+
+/**
+ * Pre-processes a DBML string to strip the `?` optional-relationship
+ * modifier (e.g. `ref: >? users.id`, `ref: ?> users.id`) that DBML supports
+ * to mark a relationship's FK column as nullable, but which @dbml/core's
+ * parser does not yet understand and rejects with a syntax error.
+ *
+ * Handles all 3 relationship syntaxes:
+ *   1. Inline field-level:  `column_name type [ref: >? other_table.column]`
+ *   2. Short form:          `Ref: table1.column >? table2.column`
+ *   3. Long form:           `Ref name { table1.column >? table2.column }`
+ *
+ * Note: this only removes the marker so parsing succeeds and the diagram
+ * renders. It does not track which side was marked optional - the FK
+ * column's own nullability (whether it has `not null`) still drives the
+ * cardinality shown in the diagram, which matches the common case where
+ * an optional-relationship column has no `not null` setting.
+ *
+ * @param {string} dbmlContent - Raw DBML content from the editor
+ * @returns {string} DBML with `?` relationship markers removed, safe to parse
+ */
+export const preprocessOptionalRelationships = (dbmlContent) => {
+  let cleanedContent = dbmlContent;
+
+  // Case 1: inline field-level ref, e.g. `[ref: >? users.id]` or `[ref: ?> users.id]`
+  cleanedContent = cleanedContent.replace(
+    /\bref\s*:\s*(\?)?\s*(<>|<|>|-)\s*(\?)?/g,
+    (match, qBefore, op) => `ref: ${op}`
+  );
+
+  // Case 2 & 3: standalone `Ref` statements, both short form (`Ref: a.b > c.d`)
+  // and long form (`Ref name { a.b > c.d }`). Scoped to spans that start with
+  // the `Ref` keyword so we never touch unrelated `?`/operator characters
+  // elsewhere in the file (e.g. inside notes).
+  cleanedContent = cleanedContent.replace(
+    /\bRef\b(?:\s+[\w$]+)?\s*(?:\{[^}]*\}|:[^\n]*)/gi,
+    stripOptionalMarkers
+  );
+
+  return cleanedContent;
+};
 
 /**
  * Parses the inner content of a `checks { ... }` block.
@@ -120,4 +181,4 @@ export const preprocessChecks = (dbmlContent) => {
   return { cleanedContent, tableChecks };
 };
 
-export default { preprocessChecks };
+export default { preprocessChecks, preprocessOptionalRelationships };
