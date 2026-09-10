@@ -1,4 +1,4 @@
-# 🚀 DBML Previewer
+# DBML Previewer
 
 [![VS Code Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-blue)](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer)
 [![Open VSX](https://img.shields.io/badge/Open%20VSX-Registry-blue)](https://open-vsx.org/extension/rizkykurniawan/dbml-previewer)
@@ -6,60 +6,60 @@
 [![GitHub issues](https://img.shields.io/github/issues/kykurniawan/vscode-dbml-previewer)](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
 [![GitHub stars](https://img.shields.io/github/stars/kykurniawan/vscode-dbml-previewer)](https://github.com/kykurniawan/vscode-dbml-previewer/stargazers)
 
-**Transform your DBML files into beautiful, interactive database diagrams instantly!** ✨
+**Transform your DBML files into beautiful, interactive database diagrams instantly.**
 
 Perfect for database architects, developers, and anyone working with database schemas. Turn text-based DBML into visual understanding with just one click.
 
 ![DBML Previewer Demo](https://raw.githubusercontent.com/kykurniawan/assets/main/vscode-dbml-previewer/demo.gif)
 
-## 🌟 What's New
+## What's New
 
 ### v1.6.0 - Optional Relationships Release
 
-- ❓ **Optional Relationship Syntax**: DBML's `?` relationship modifier (`>?`, `?>`, `<?`, `?<`) is now supported instead of failing to parse
-- 🐛 **Multi-Schema Relationships Fix**: Relationships between default-schema tables now render correctly in files that also use explicitly-named schemas
+- **Optional Relationship Syntax**: DBML's `?` relationship modifier (`>?`, `?>`, `<?`, `?<`) is now supported instead of failing to parse
+- **Multi-Schema Relationships Fix**: Relationships between default-schema tables now render correctly in files that also use explicitly-named schemas
 
-## ⚡ Key Features
+## Key Features
 
-### 🎯 **Instant Visual Database Diagrams**
+### Instant Visual Database Diagrams
 
-✅ **One-Click Preview** - Transform DBML files into interactive diagrams instantly  
-✅ **Real-Time Updates** - See changes as you save your DBML files  
-✅ **Drag & Drop Tables** - Customize layout with automatic position saving  
-✅ **Smart Table Notes** - Clean popup tooltips for table documentation
+- **One-Click Preview** - Transform DBML files into interactive diagrams instantly
+- **Real-Time Updates** - See changes as you save your DBML files
+- **Drag & Drop Tables** - Customize layout with automatic position saving
+- **Smart Table Notes** - Clean popup tooltips for table documentation
 
-### 🔗 **Intelligent Relationship Mapping**
+### Intelligent Relationship Mapping
 
-✅ **Visual Connections** - See foreign key relationships at a glance
-✅ **Interactive Tooltips** - Click relationships for detailed information
-✅ **Clickable Navigation** - Click table names in tooltips to navigate instantly
-✅ **Column-Level Precision** - Exact source and target column identification
-✅ **Cardinality Display** - Clear 1:1, 1:_, _:\* relationship indicators
+- **Visual Connections** - See foreign key relationships at a glance
+- **Interactive Tooltips** - Click relationships for detailed information
+- **Clickable Navigation** - Click table names in tooltips to navigate instantly
+- **Column-Level Precision** - Exact source and target column identification
+- **Cardinality Display** - Clear 1:1, 1:_, _:\* relationship indicators
 
-### 📊 **Enterprise-Ready Schema Support**
+### Enterprise-Ready Schema Support
 
-✅ **Multi-Schema Files** - Handle complex databases with multiple schemas  
-✅ **Table Grouping** - Visual organization with background containers  
-✅ **Rich Column Details** - Types, constraints, keys, and enum support  
-✅ **Full DBML Specification** - Complete support for all DBML features
+- **Multi-Schema Files** - Handle complex databases with multiple schemas
+- **Table Grouping** - Visual organization with background containers
+- **Rich Column Details** - Types, constraints, keys, and enum support
+- **Full DBML Specification** - Complete support for all DBML features
 
-### 🎨 **Seamless VS Code Integration**
+### Seamless VS Code Integration
 
-✅ **Flexible Theming** - Choose VS Code theme inheritance or clean light theme
-✅ **Multiple Access Points** - Command palette, context menu, keyboard shortcuts
-✅ **Side-by-Side Editing** - Preview alongside your DBML file
-✅ **Quick Access** - `Ctrl+Shift+D` / `Cmd+Shift+D` keyboard shortcut
+- **Flexible Theming** - Choose VS Code theme inheritance or clean light theme
+- **Multiple Access Points** - Command palette, context menu, keyboard shortcuts
+- **Side-by-Side Editing** - Preview alongside your DBML file
+- **Quick Access** - `Ctrl+Shift+D` / `Cmd+Shift+D` keyboard shortcut
 
-### 📤 **Professional Export Capabilities**
+### Professional Export Capabilities
 
-✅ **PNG Export** - High-resolution raster images for documentation
-✅ **SVG Export** - Scalable vector graphics for presentations
-✅ **Configurable Quality** - Adjust image quality and resolution
-✅ **Background Control** - Export with or without background color
+- **PNG Export** - High-resolution raster images for documentation
+- **SVG Export** - Scalable vector graphics for presentations
+- **Configurable Quality** - Adjust image quality and resolution
+- **Background Control** - Export with or without background color
 
-## 🚀 Get Started in 30 Seconds
+## Get Started in 30 Seconds
 
-### 📦 **Quick Install**
+### Quick Install
 
 **From VS Code:**
 
@@ -79,17 +79,17 @@ codium --install-extension rizkykurniawan.dbml-previewer
 
 **Supported Editors:**
 
-- ✅ Visual Studio Code (via [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer))
-- ✅ VSCodium (via [Open VSX Registry](https://open-vsx.org/extension/rizkykurniawan/dbml-previewer))
-- ✅ Eclipse Theia
-- ✅ Gitpod
-- ✅ Any VS Code compatible editor
+- Visual Studio Code (via [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=rizkykurniawan.dbml-previewer))
+- VSCodium (via [Open VSX Registry](https://open-vsx.org/extension/rizkykurniawan/dbml-previewer))
+- Eclipse Theia
+- Gitpod
+- Any VS Code compatible editor
 
-### ⚡ **Instant Usage**
+### Instant Usage
 
-1. 📁 **Open** any `.dbml` file in VS Code
-2. ⌨️ **Press** `Ctrl+Shift+D` (Windows/Linux) or `Cmd+Shift+D` (macOS)
-3. 🎉 **Done!** Your database diagram appears instantly
+1. **Open** any `.dbml` file in VS Code
+2. **Press** `Ctrl+Shift+D` (Windows/Linux) or `Cmd+Shift+D` (macOS)
+3. **Done** - Your database diagram appears instantly
 
 **Alternative Methods:**
 
@@ -138,23 +138,23 @@ Table order_items {
 }
 ```
 
-## 📖 DBML Support
+## DBML Support
 
 This extension supports the full DBML specification including:
 
-- ✅ **Tables** with columns, types, and constraints
-- ✅ **Primary Keys** and **Foreign Keys** with visual indicators
-- ✅ **Relationships** (`>`, `<`, `-`, `<>`) with proper cardinality display, including the optional `?` modifier (e.g. `>?`, `?>`)
-- ✅ **Unique Constraints** and **Not Null** constraints
-- ✅ **Table Notes**
-- ✅ **Indexes** (simple and composite)
-- ✅ **Table Groups** for schema organization
-- ✅ **Custom Colors** for tables (`headercolor`) and groups (`color`)
-- ✅ **CHECK Constraints** - Table-level and column-level check constraint support
-- ✅ **Multi-schema** database support
-- ✅ **Default Values** and **Auto-increment** fields
+- **Tables** with columns, types, and constraints
+- **Primary Keys** and **Foreign Keys** with visual indicators
+- **Relationships** (`>`, `<`, `-`, `<>`) with proper cardinality display, including the optional `?` modifier (e.g. `>?`, `?>`)
+- **Unique Constraints** and **Not Null** constraints
+- **Table Notes**
+- **Indexes** (simple and composite)
+- **Table Groups** for schema organization
+- **Custom Colors** for tables (`headercolor`) and groups (`color`)
+- **CHECK Constraints** - Table-level and column-level check constraint support
+- **Multi-schema** database support
+- **Default Values** and **Auto-increment** fields
 
-## 🎛️ Controls and Navigation
+## Controls and Navigation
 
 ### Diagram Controls
 
@@ -176,7 +176,7 @@ This extension supports the full DBML specification including:
 - Space + drag: Pan diagram
 - Escape: Close relationship tooltips
 
-## ⚙️ Configuration
+## Configuration
 
 The extension works out of the box with sensible defaults and includes the following configuration options:
 
@@ -238,7 +238,7 @@ The extension works out of the box with sensible defaults and includes the follo
 
 1. Open any DBML file and preview it
 2. Look for export buttons in the top-right stats panel
-3. Click "📷 Export PNG" or "🖼️ Export SVG"
+3. Click "Export PNG" or "Export SVG"
 4. Image downloads automatically with timestamped filename
 
 **Via Command Palette:**
@@ -271,7 +271,7 @@ The extension works out of the box with sensible defaults and includes the follo
 - Performance optimization toggles
 - Advanced layout algorithm options
 
-## 🛠️ Development & Contributing
+## Development & Contributing
 
 Want to contribute? Check out our [Contributing Guide](CONTRIBUTING.md) for detailed setup instructions, coding guidelines, and development workflow.
 
@@ -285,18 +285,18 @@ npm install && npm run build
 
 **Architecture:** React + React Flow + DBML Core + Dagre Layout
 
-## 💝 Contributing
+## Contributing
 
-**Love this extension?** Help make it even better!
+Love this extension? Help make it even better:
 
-- 🐛 **Report Bugs** - Found an issue? [Let us know!](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
-- 💡 **Request Features** - Have ideas? [Share them!](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
-- ⭐ **Star the Project** - Show your support!
-- 🔧 **Code Contributions** - Check our [Contributing Guide](CONTRIBUTING.md)
+- **Report Bugs** - Found an issue? [Let us know](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
+- **Request Features** - Have ideas? [Share them](https://github.com/kykurniawan/vscode-dbml-previewer/issues)
+- **Star the Project** - Show your support
+- **Code Contributions** - Check our [Contributing Guide](CONTRIBUTING.md)
 
 **Quick Start:** Fork → Branch → Code → Test → Pull Request
 
-## 🐛 Issues and Support
+## Issues and Support
 
 ### Reporting Issues
 
@@ -311,42 +311,42 @@ If you encounter any problems:
 
 ### Getting Help
 
-- 📖 Check our documentation
-- 💬 Join discussions in GitHub Issues
-- 📧 Contact us at contact.rizkykurniawan@gmail.com
+- Check our documentation
+- Join discussions in GitHub Issues
+- Contact us at contact.rizkykurniawan@gmail.com
 
-## 📋 System Requirements
+## System Requirements
 
-- 💻 **VS Code**: 1.102.0+
-- 📄 **File Format**: `.dbml` files (DBML v2 syntax)
-- 🚀 **Zero Setup**: No additional dependencies required!
+- **VS Code**: 1.102.0+
+- **File Format**: `.dbml` files (DBML v2 syntax)
+- **Zero Setup**: No additional dependencies required
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Special Thanks
+## Special Thanks
 
-**Built with amazing open source tools:**
+Built with amazing open source tools:
 
-- 🎯 [DBML Community](https://dbml.dbdiagram.io/) - Database Markup Language specification
-- ⚛️ [React Flow](https://reactflow.dev/) - Interactive diagram library
-- 🔧 [VS Code API](https://code.visualstudio.com/api) - Robust extension platform
+- [DBML Community](https://dbml.dbdiagram.io/) - Database Markup Language specification
+- [React Flow](https://reactflow.dev/) - Interactive diagram library
+- [VS Code API](https://code.visualstudio.com/api) - Robust extension platform
 
-## 📊 Why Developers Love It
+## Why Developers Love It
 
-✅ **Zero Configuration** - Works instantly with any DBML file  
-✅ **Lightning Fast** - Optimized for performance and responsiveness  
-✅ **Professional Quality** - Production-ready with enterprise features  
-✅ **Community Driven** - Built with real developer feedback
+- **Zero Configuration** - Works instantly with any DBML file
+- **Lightning Fast** - Optimized for performance and responsiveness
+- **Professional Quality** - Production-ready with enterprise features
+- **Community Driven** - Built with real developer feedback
 
 ---
 
 <div align="center">
 
-**⭐ Star this project if it helps you visualize databases better! ⭐**
+**Star this project if it helps you visualize databases better.**
 
-**Made with ❤️ by [Rizky Kurniawan](https://github.com/kykurniawan)**
+**Made by [Rizky Kurniawan](https://github.com/kykurniawan)**
 
 _"From DBML text to visual database understanding in seconds"_
 
