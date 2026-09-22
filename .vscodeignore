@@ -10,6 +10,8 @@ vsc-extension-quickstart.md
 **/.vscode-test.*
 node_modules/**
 src/**
+test-unit/**
+.mocharc.json
 webpack.config.js
 yarn.lock
 package-lock.json
