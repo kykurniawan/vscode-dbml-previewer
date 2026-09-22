@@ -342,6 +342,22 @@ const DBMLPreview = ({ initialContent }) => {
     // No-op: Manual connections disabled in preview mode
   }, []);
 
+  // Handle column click for tooltip display
+  const handleColumnClick = useCallback((column, enumDef, position) => {
+    // Close other tooltips
+    setTooltipData(null);
+    setSelectedEdgeIds(new Set());
+    setTableNoteTooltipData(null);
+    setTableIndexesTooltipData(null);
+
+    // Open column tooltip
+    setColumnTooltipData({
+      column,
+      enumDef,
+      position
+    });
+  }, []);
+
   // Node click handler for column nodes and sticky notes
   const onNodeClick = useCallback((event, node) => {
     if (node.type === 'column') {
@@ -392,22 +408,6 @@ const DBMLPreview = ({ initialContent }) => {
   const handleCloseTooltip = useCallback(() => {
     setTooltipData(null);
     setSelectedEdgeIds(new Set());
-  }, []);
-
-  // Handle column click for tooltip display
-  const handleColumnClick = useCallback((column, enumDef, position) => {
-    // Close other tooltips
-    setTooltipData(null);
-    setSelectedEdgeIds(new Set());
-    setTableNoteTooltipData(null);
-    setTableIndexesTooltipData(null);
-
-    // Open column tooltip
-    setColumnTooltipData({
-      column,
-      enumDef,
-      position
-    });
   }, []);
 
   // Handle table note click for tooltip display
