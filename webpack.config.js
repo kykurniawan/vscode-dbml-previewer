@@ -1,6 +1,6 @@
 const path = require('path');
 
-module.exports = {
+module.exports = (env, argv) => ({
   entry: './src/webview/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -14,7 +14,15 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env', '@babel/preset-react'],
+            babelrc: false,
+            configFile: false,
+            presets: [
+              '@babel/preset-env',
+              ['@babel/preset-react', {
+                runtime: 'automatic',
+                development: argv.mode !== 'production',
+              }],
+            ],
           },
         },
       },
@@ -31,4 +39,4 @@ module.exports = {
     vscode: 'commonjs vscode',
   },
   target: 'web',
-};
+});

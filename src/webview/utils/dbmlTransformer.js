@@ -138,6 +138,29 @@ const findEnumForType = (typeName, enums) => {
 };
 
 /**
+ * Merge a new handle role into a column's existing handle record. A column can be
+ * a source in one Ref and a target in another; both roles must be preserved so
+ * ColumnNode mounts both pairs of handles and no edge references a missing handle.
+ * @param {Object|undefined} existing - The current record for this column, if any
+ * @param {{isSource:boolean, isTarget:boolean, relation:string}} role
+ * @returns {Object} The merged record
+ */
+export const mergeColumnRole = (existing, role) => {
+  const merged = existing ? { ...existing } : { isSource: false, isTarget: false };
+  if (role.isSource) {
+    merged.isSource = true;
+    merged.sourceRelation = role.relation;
+  }
+  if (role.isTarget) {
+    merged.isTarget = true;
+    merged.targetRelation = role.relation;
+  }
+  // Keep a best-effort single relation for backward compatibility.
+  merged.relation = role.relation != null ? role.relation : merged.relation;
+  return merged;
+};
+
+/**
  * Analyze column relationships from DBML refs
  * @param {Array} refs - Array of reference objects with proper fieldNames
  * @param {Array} tables - Array of table objects with schema info
@@ -177,11 +200,10 @@ const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
 
       fieldNames.forEach(fieldName => {
         if (fieldName) {
-          columnHandles[sourceFullTableName][fieldName] = {
-            isSource: true,
-            isTarget: false,
-            relation: sourceEndpoint.relation
-          };
+          columnHandles[sourceFullTableName][fieldName] = mergeColumnRole(
+            columnHandles[sourceFullTableName][fieldName],
+            { isSource: true, isTarget: false, relation: sourceEndpoint.relation }
+          );
         }
       });
     }
@@ -202,11 +224,10 @@ const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
 
       fieldNames.forEach(fieldName => {
         if (fieldName) {
-          columnHandles[fullTableName][fieldName] = {
-            isSource: false,
-            isTarget: true,
-            relation: targetEndpoint.relation
-          };
+          columnHandles[fullTableName][fieldName] = mergeColumnRole(
+            columnHandles[fullTableName][fieldName],
+            { isSource: false, isTarget: true, relation: targetEndpoint.relation }
+          );
         }
       });
     }
