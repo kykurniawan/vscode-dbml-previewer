@@ -2,6 +2,15 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## 1.6.1
+
+### Fixed
+- **Blank preview in packaged builds**: The production webview bundle called a JSX dev runtime that isn't shipped, so the preview panel was empty (`jsxDEV is not a function`). The build now sets the JSX runtime mode explicitly and fails if `jsxDEV` appears in a production bundle
+- **Crash on first render**: Fixed a `ReferenceError` caused by `handleColumnClick` being referenced before its declaration
+- **Missing relationship handles**: A column that is both the source of one ref and the target of another now keeps both handles
+
+Thanks to @ctnguyen for the fixes.
+
 ## 1.6.0
 
 ### Added
