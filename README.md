@@ -14,6 +14,11 @@ Perfect for database architects, developers, and anyone working with database sc
 
 ## What's New
 
+### v1.6.1 - Bug Fix Release
+
+- **Blank Preview Fix**: Fixed the preview panel showing up empty in the installed extension (v1.6.0)
+- **Relationship Handles Fix**: A column that is both the source of one relationship and the target of another now keeps both connection points
+
 ### v1.6.0 - Optional Relationships Release
 
 - **Optional Relationship Syntax**: DBML's `?` relationship modifier (`>?`, `?>`, `<?`, `?<`) is now supported instead of failing to parse
