@@ -30,10 +30,15 @@ const sameCheckList = (a, b) => {
   return x.every((p, i) => p.x === y[i].x && p.y === y[i].y);
 };
 
-// How far along the path the relationship symbols sit. Far enough from the
-// endpoint that the table node never covers them, close enough to read as
-// belonging to that end.
-const SYMBOL_INSET = 24;
+// How far along the path from the endpoint the CENTRE of a symbol box sits.
+// The box is 20x20 and centred on that point, so its outward half reaches 10px
+// and the crow's foot, which opens outward to x=17, reaches 7px — 8px with the
+// 2px round cap. Insetting by exactly that reach puts the open end of the foot
+// flush against the table border, which is where the notation belongs: at the
+// entity it qualifies. Anything larger leaves the symbol floating in open space
+// short of the table. Safely inside STUB, so this stretch of path is straight
+// and the symbol's rotation matches the line it sits on.
+const SYMBOL_INSET = 8;
 // Optional cardinality text sits further in than the symbols, so the two never
 // collide when a user turns the labels on.
 const LABEL_INSET = 52;
