@@ -209,7 +209,7 @@
         "diagram.editableEdgeRouting": {
           "type": "boolean",
           "default": false,
-          "description": "Allow editing relationship routes by dragging waypoints. When enabled, select or hover an edge to reveal draggable points and segment handles; drag a point to bend the edge, drag a segment to add a point, double-click a point to delete it. Saved routes are always rendered regardless of this setting."
+          "description": "Allow relationship routes to be reshaped by hand. When enabled, click an edge to enter edit mode, then drag a segment sideways to move it, or grab it near its middle to split it in two and drag that half; segments that end up aligned merge back together, and each edge gets a control that resets it to its automatic route. Applies to orthogonal edges, so it has no effect while 'diagram.edgeType' is 'bezier' or 'straight'. Saved routes are always rendered regardless of this setting."
         },
         "diagram.showCardinalityLabels": {
           "type": "boolean",

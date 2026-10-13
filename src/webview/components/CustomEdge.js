@@ -3,6 +3,8 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   Position,
+  getBezierPath,
+  getStraightPath,
   useReactFlow,
   useStore,
 } from '@xyflow/react';
@@ -17,10 +19,18 @@ import {
   interiorOf,
 } from '../utils/edgeSegments';
 
-// Corner radius of the rendered path. diagram.edgeType selects the CORNER STYLE
-// only — sharp corners for 'straight', rounded otherwise — never a second
-// router: every edge is drawn by the segment router regardless.
+// Corner radius used when the orthogonal router draws the path: sharp corners
+// for 'straight', rounded otherwise.
 const cornerRadiusFor = (pathStyle) => (pathStyle === 'straight' ? 0 : 8);
+
+// diagram.edgeType values that are a shape of their own rather than a corner
+// style, and the stock path function each one means.
+const STOCK_PATHS = {
+  bezier: getBezierPath,
+  straight: getStraightPath,
+};
+
+const positionForSide = (side) => (side === 'left' ? Position.Left : Position.Right);
 
 // True when two interior corner lists are point-for-point equal.
 const sameCheckList = (a, b) => {
@@ -107,21 +117,27 @@ const CustomEdge = ({
   // we draw from the raw working corners; when idle we draw the clean route.
   const isDraggingRef = useRef(false);
 
-  // Editable mode is entered only by double-clicking the edge (data.isLatched)
-  // while the routing feature is on (data.isEditable). Handles and the reset
-  // control appear ONLY in this mode; hover merely highlights the line.
-  const editing = !!data?.isEditable && !!data?.isLatched;
-
   // Effective endpoint sides, needed to draw the connector and to reproduce the
   // stub direction for the default route.
   const effSourceSide = data?.sourceSide ?? (sourcePosition === Position.Left ? 'left' : 'right');
   const effTargetSide = data?.targetSide ?? (targetPosition === Position.Left ? 'left' : 'right');
 
-  // The segment router is the ONLY router. Every edge — routed or not, editable
-  // or not — is drawn through buildRouteVertices/buildRoundedPath: an empty
-  // route yields the default H-V-H (or single-segment) shape, a saved route the
-  // cleaned segment model. This is the default and post-reset shape the spec
-  // requires; there is no stock-path fallback.
+  // Hand-edited corners only mean something to the orthogonal router, so an edge
+  // that has them is always drawn by it. An edge that has none is free to take
+  // the shape diagram.edgeType asks for: 'bezier' stays a real curve and
+  // 'straight' a real direct line, as that setting has always promised, while
+  // 'smoothstep' — the default — is the orthogonal route this feature edits.
+  const hasCustomRoute = Array.isArray(data?.checkPoints) && data.checkPoints.length > 0;
+  const stockPathFn = hasCustomRoute ? null : STOCK_PATHS[data?.pathStyle];
+
+  // Editable mode is entered only by clicking the edge (data.isLatched) while
+  // the routing feature is on (data.isEditable). Handles and the reset control
+  // appear ONLY in this mode; hover merely highlights the line. They are also
+  // withheld from a stock-path edge: every handle is positioned on the
+  // orthogonal vertex list, which a curve or a diagonal does not follow, so the
+  // grips would float off the line the user can see.
+  const editing = !!data?.isEditable && !!data?.isLatched && !stockPathFn;
+
   const geom = {
     source: { x: sourceX, y: sourceY },
     target: { x: targetX, y: targetY },
@@ -139,7 +155,19 @@ const CustomEdge = ({
   } else {
     vertices = buildRouteVertices({ ...geom, checkPoints: data?.checkPoints });
   }
-  const edgePath = buildRoundedPath(vertices, cornerRadiusFor(data?.pathStyle)).d;
+  let edgePath;
+  if (stockPathFn) {
+    [edgePath] = stockPathFn({
+      sourceX,
+      sourceY,
+      sourcePosition: positionForSide(effSourceSide),
+      targetX,
+      targetY,
+      targetPosition: positionForSide(effTargetSide),
+    });
+  } else {
+    edgePath = buildRoundedPath(vertices, cornerRadiusFor(data?.pathStyle)).d;
+  }
 
   const segments = useMemo(() => deriveSegments(vertices), [edgePath]); // eslint-disable-line react-hooks/exhaustive-deps
 
