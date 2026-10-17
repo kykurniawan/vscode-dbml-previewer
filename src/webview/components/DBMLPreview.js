@@ -206,6 +206,7 @@ const DBMLPreview = ({ initialContent }) => {
   const [relationshipMarkers, setRelationshipMarkers] = useState(true);
   const [editableEdgeRouting, setEditableEdgeRouting] = useState(false);
   const [showCardinalityLabels, setShowCardinalityLabels] = useState(false);
+  const [showMinimap, setShowMinimap] = useState(true);
   const [exportQuality, setExportQuality] = useState(0.95);
   const [exportBackground, setExportBackground] = useState(true);
   const [exportPadding, setExportPadding] = useState(20);
@@ -1115,6 +1116,9 @@ const DBMLPreview = ({ initialContent }) => {
     const initialShowCardinalityLabels = window.showCardinalityLabels !== undefined
       ? window.showCardinalityLabels
       : false;
+    const initialShowMinimap = window.showMinimap !== undefined
+      ? window.showMinimap
+      : true;
     const initialExportQuality = window.exportQuality !== undefined
       ? window.exportQuality
       : 0.95;
@@ -1131,6 +1135,7 @@ const DBMLPreview = ({ initialContent }) => {
     setRelationshipMarkers(initialRelationshipMarkers);
     setEditableEdgeRouting(initialEditableEdgeRouting);
     setShowCardinalityLabels(initialShowCardinalityLabels);
+    setShowMinimap(initialShowMinimap);
     setExportQuality(initialExportQuality);
     setExportBackground(initialExportBackground);
     setExportPadding(initialExportPadding);
@@ -1191,6 +1196,9 @@ const DBMLPreview = ({ initialContent }) => {
           if (message.showCardinalityLabels !== undefined) {
             setShowCardinalityLabels(message.showCardinalityLabels);
           }
+          if (message.showMinimap !== undefined) {
+            setShowMinimap(message.showMinimap);
+          }
           if (message.exportQuality !== undefined) {
             setExportQuality(message.exportQuality);
           }
@@ -1221,6 +1229,9 @@ const DBMLPreview = ({ initialContent }) => {
           }
           if (message.showCardinalityLabels !== undefined) {
             setShowCardinalityLabels(message.showCardinalityLabels);
+          }
+          if (message.showMinimap !== undefined) {
+            setShowMinimap(message.showMinimap);
           }
           if (message.exportQuality !== undefined) {
             setExportQuality(message.exportQuality);
@@ -1476,20 +1487,22 @@ const DBMLPreview = ({ initialContent }) => {
             backgroundColor: getThemeVar('background')
           }}
         />
-        <MiniMap
-          nodeStrokeWidth={2}
-          nodeColor={getThemeVar('buttonBackground')}
-          nodeStrokeColor={getThemeVar('panelBorder')}
-          bgColor={getThemeVar('panelBackground')}
-          maskColor="rgba(0, 0, 0, 0.1)"
-          maskStrokeColor={getThemeVar('panelBorder')}
-          position="bottom-right"
-          pannable={true}
-          style={{
-            border: `1px solid ${getThemeVar('panelBorder')}`,
-            borderRadius: '4px'
-          }}
-        />
+        {showMinimap && (
+          <MiniMap
+            nodeStrokeWidth={2}
+            nodeColor={getThemeVar('buttonBackground')}
+            nodeStrokeColor={getThemeVar('panelBorder')}
+            bgColor={getThemeVar('panelBackground')}
+            maskColor="rgba(0, 0, 0, 0.1)"
+            maskStrokeColor={getThemeVar('panelBorder')}
+            position="bottom-right"
+            pannable={true}
+            style={{
+              border: `1px solid ${getThemeVar('panelBorder')}`,
+              borderRadius: '4px'
+            }}
+          />
+        )}
 
         <TableNavigationPanel dbmlData={dbmlData} />
         <EdgeNavigationProvider setNavigationHandler={setNavigationHandler} />

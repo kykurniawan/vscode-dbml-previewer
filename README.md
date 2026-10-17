@@ -246,6 +246,12 @@ The extension works out of the box with sensible defaults and includes the follo
   - Saved routes are always drawn, whether or not this setting is on, so turning it off is a
     read-only mode rather than a way to lose work
 
+### Display Configuration
+
+- **`diagram.showMinimap`** (boolean, default: `true`)
+  - Show the minimap in the bottom-right corner of the diagram
+  - Disable to hide it
+
 ### Export Configuration
 
 - **`diagram.exportQuality`** (number, default: `0.95`)
