@@ -197,6 +197,7 @@ function createPreviewPanel(context, filePath, content) {
 	const relationshipMarkers = config.get('relationshipMarkers', true);
 	const editableEdgeRouting = config.get('editableEdgeRouting', false);
 	const showCardinalityLabels = config.get('showCardinalityLabels', false);
+	const showMinimap = config.get('showMinimap', true);
 	const exportQuality = config.get('exportQuality', 0.95);
 	const exportBackground = config.get('exportBackground', true);
 	const exportPadding = config.get('exportPadding', 20);
@@ -210,7 +211,7 @@ function createPreviewPanel(context, filePath, content) {
 	}
 
 	// Set the webview content
-	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide, relationshipMarkers, editableEdgeRouting, initialLayout, initialEdgeRoutes);
+	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide, relationshipMarkers, editableEdgeRouting, initialLayout, initialEdgeRoutes, showMinimap);
 
 	// Debounce state for layout file writes. pendingEdges starts from the routes
 	// already persisted in the sidecar, so the first positions-only save (a plain
@@ -234,6 +235,7 @@ function createPreviewPanel(context, filePath, content) {
 					const currentAutoEndpointSide = currentConfig.get('autoEndpointSide', true);
 					const currentRelationshipMarkers = currentConfig.get('relationshipMarkers', true);
 					const currentEditableEdgeRouting = currentConfig.get('editableEdgeRouting', false);
+					const currentShowMinimap = currentConfig.get('showMinimap', true);
 					const currentExportQuality = currentConfig.get('exportQuality', 0.95);
 					const currentExportBackground = currentConfig.get('exportBackground', true);
 					const currentExportPadding = currentConfig.get('exportPadding', 20);
@@ -246,6 +248,7 @@ function createPreviewPanel(context, filePath, content) {
 						relationshipMarkers: currentRelationshipMarkers,
 						editableEdgeRouting: currentEditableEdgeRouting,
 						showCardinalityLabels: currentShowCardinalityLabels,
+						showMinimap: currentShowMinimap,
 						exportQuality: currentExportQuality,
 						exportBackground: currentExportBackground,
 						exportPadding: currentExportPadding
@@ -283,6 +286,7 @@ function createPreviewPanel(context, filePath, content) {
 		    event.affectsConfiguration('diagram.relationshipMarkers') ||
 		    event.affectsConfiguration('diagram.editableEdgeRouting') ||
 		    event.affectsConfiguration('diagram.showCardinalityLabels') ||
+		    event.affectsConfiguration('diagram.showMinimap') ||
 		    event.affectsConfiguration('diagram.exportQuality') ||
 		    event.affectsConfiguration('diagram.exportBackground') ||
 		    event.affectsConfiguration('diagram.exportPadding')) {
@@ -293,6 +297,7 @@ function createPreviewPanel(context, filePath, content) {
 			const relationshipMarkers = config.get('relationshipMarkers', true);
 			const editableEdgeRouting = config.get('editableEdgeRouting', false);
 			const showCardinalityLabels = config.get('showCardinalityLabels', false);
+			const showMinimap = config.get('showMinimap', true);
 			const exportQuality = config.get('exportQuality', 0.95);
 			const exportBackground = config.get('exportBackground', true);
 			const exportPadding = config.get('exportPadding', 20);
@@ -304,6 +309,7 @@ function createPreviewPanel(context, filePath, content) {
 				relationshipMarkers: relationshipMarkers,
 				editableEdgeRouting: editableEdgeRouting,
 				showCardinalityLabels: showCardinalityLabels,
+				showMinimap: showMinimap,
 				exportQuality: exportQuality,
 				exportBackground: exportBackground,
 				exportPadding: exportPadding
@@ -371,9 +377,10 @@ function createPreviewPanel(context, filePath, content) {
  * @param {boolean} editableEdgeRouting
  * @param {Object|null} initialLayout
  * @param {Object|null} initialEdgeRoutes
+ * @param {boolean} showMinimap
  * @returns {string}
  */
-function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide = true, relationshipMarkers = true, editableEdgeRouting = false, initialLayout = null, initialEdgeRoutes = null) {
+function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide = true, relationshipMarkers = true, editableEdgeRouting = false, initialLayout = null, initialEdgeRoutes = null, showMinimap = true) {
 	// Get the local path to main script run in the webview
 	const scriptPathOnDisk = vscode.Uri.file(path.join(__dirname, 'dist', 'webview.js'));
 	const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -412,6 +419,7 @@ function getWebviewContent(content, fileName, filePath, webview, inheritThemeSty
 			window.relationshipMarkers = ${JSON.stringify(relationshipMarkers)};
 			window.editableEdgeRouting = ${JSON.stringify(editableEdgeRouting)};
 			window.showCardinalityLabels = ${JSON.stringify(showCardinalityLabels)};
+			window.showMinimap = ${JSON.stringify(showMinimap)};
 			window.exportQuality = ${JSON.stringify(exportQuality)};
 			window.exportBackground = ${JSON.stringify(exportBackground)};
 			window.exportPadding = ${JSON.stringify(exportPadding)};
@@ -465,6 +473,7 @@ function createBulkExportPanel(context) {
 	const relationshipMarkers = config.get('relationshipMarkers', true);
 	const editableEdgeRouting = config.get('editableEdgeRouting', false);
 	const showCardinalityLabels = config.get('showCardinalityLabels', false);
+	const showMinimap = config.get('showMinimap', true);
 	const exportQuality = config.get('exportQuality', 0.95);
 	const exportBackground = config.get('exportBackground', true);
 	const exportPadding = config.get('exportPadding', 20);
@@ -480,7 +489,7 @@ function createBulkExportPanel(context) {
 		}
 	);
 
-	panel.webview.html = getWebviewContent('', 'bulk-export', '', panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide, relationshipMarkers, editableEdgeRouting);
+	panel.webview.html = getWebviewContent('', 'bulk-export', '', panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide, relationshipMarkers, editableEdgeRouting, null, null, showMinimap);
 
 	panel.webview.onDidReceiveMessage(
 		message => handleBulkWebviewMessage(message, panel),

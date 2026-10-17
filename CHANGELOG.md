@@ -4,6 +4,9 @@ All notable changes to the "dbml-previewer" extension will be documented in this
 
 ## Unreleased
 
+### Added
+- **Minimap toggle**: New `diagram.showMinimap` setting (default: `true`) to hide the minimap in the bottom-right corner of the diagram.
+
 ### Fixed
 - **Blank preview when a column default is `0`**: Clicking a column whose default value is `0` (or an empty string) blanked the whole preview. The tooltip fell back to rendering the raw `dbdefault` object, which React rejects as a child. Defaults are now rendered as text, so `default: 0` shows as `Default: 0`.
 

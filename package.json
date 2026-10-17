@@ -216,6 +216,11 @@
           "default": false,
           "description": "Show cardinality labels on relationship edges in the diagram. 1 = one-side, * = many-side."
         },
+        "diagram.showMinimap": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the minimap in the bottom-right corner of the diagram. Disable to hide it."
+        },
         "diagram.exportQuality": {
           "type": "number",
           "default": 0.95,
