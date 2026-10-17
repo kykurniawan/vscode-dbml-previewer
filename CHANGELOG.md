@@ -2,13 +2,23 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
-## Unreleased
+## 1.7.0
 
 ### Added
-- **Minimap toggle**: New `diagram.showMinimap` setting (default: `true`) to hide the minimap in the bottom-right corner of the diagram.
+- **Editable relationship edges**: Relationship routes are drawn as clean orthogonal segments that can be reshaped by hand and are remembered per file
+  - Each end connects to the side of its table that faces the related table (`diagram.autoEndpointSide`, default `true`), removing many of the crossings caused by always leaving right and entering left
+  - Turn on `diagram.editableEdgeRouting` to click a relationship and drag a segment sideways to move it, or grab it near its middle to split it in two; segments that end up aligned merge back automatically, and each edge has a reset control that restores its automatic route without touching table positions
+  - Multiplicities are drawn on the line as crow's-foot / bar markers (`diagram.relationshipMarkers`, default `true`)
+  - Hand-edited routes are saved in the layout sidecar next to table positions and survive reordering or inserting a `Ref`
+- **Minimap toggle**: New `diagram.showMinimap` setting (default: `true`) to hide the minimap in the bottom-right corner of the diagram
+
+### Changed
+- **Cardinality labels** (`diagram.showCardinalityLabels`) now show `1` (one side) and `*` (many side), matching the relationship markers, instead of `0` / `1` / `N`
 
 ### Fixed
 - **Blank preview when a column default is `0`**: Clicking a column whose default value is `0` (or an empty string) blanked the whole preview. The tooltip fell back to rendering the raw `dbdefault` object, which React rejects as a child. Defaults are now rendered as text, so `default: 0` shows as `Default: 0`.
+
+Thanks to @ctnguyen for the relationship edge work.
 
 ## 1.6.1
 
