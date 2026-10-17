@@ -2,6 +2,20 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { getThemeVar } from '../styles/themeManager.js';
 
+// Routing handles are always mounted but visually transparent; the 🔗 column
+// indicator and the row highlight remain the only visible "linked" cue.
+const hiddenHandleStyle = (side) => ({
+  [side]: '-1px',
+  opacity: 0,
+  pointerEvents: 'none',
+  width: '1px',
+  height: '1px',
+  minWidth: '1px',
+  minHeight: '1px',
+  border: 'none',
+  background: 'transparent',
+});
+
 const ColumnNode = ({ data }) => {
   const { column, hasSourceHandle, hasTargetHandle, columnWidth = 196, enumDef, onColumnClick } = data;
 
@@ -55,21 +69,22 @@ const ColumnNode = ({ data }) => {
       title={`Click to view details for ${column.name}${enumDef ? ' (enum)' : ''}`}
       data-column-node="true"
     >
-      {/* Target Handle */}
+      {/* Target Handles (both sides, transparent; the 🔗 indicator is the visible cue) */}
       {hasTargetHandle && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          id="target"
-          style={{
-            left: '-4px',
-            background: getThemeVar('chartsLines'),
-            border: `2px solid ${getThemeVar('editorBackground')}`,
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%'
-          }}
-        />
+        <>
+          <Handle
+            type="target"
+            position={Position.Left}
+            id="target-left"
+            style={hiddenHandleStyle('left')}
+          />
+          <Handle
+            type="target"
+            position={Position.Right}
+            id="target-right"
+            style={hiddenHandleStyle('right')}
+          />
+        </>
       )}
 
       {/* Column Content */}
@@ -110,21 +125,22 @@ const ColumnNode = ({ data }) => {
         {getColumnType(column)}
       </span>
 
-      {/* Source Handle */}
+      {/* Source Handles (both sides, transparent; the 🔗 indicator is the visible cue) */}
       {hasSourceHandle && (
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="source"
-          style={{
-            right: '-4px',
-            background: getThemeVar('chartsLines'),
-            border: `2px solid ${getThemeVar('editorBackground')}`,
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%'
-          }}
-        />
+        <>
+          <Handle
+            type="source"
+            position={Position.Left}
+            id="source-left"
+            style={hiddenHandleStyle('left')}
+          />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="source-right"
+            style={hiddenHandleStyle('right')}
+          />
+        </>
       )}
     </div>
   );

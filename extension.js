@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 const fs = require('fs');
 const path = require('path');
+const { parseLayoutFile, resolvePendingEdges } = require('./src/layout/layoutFile');
 
 // Track the active preview panel
 let activePreviewPanel = null;
@@ -13,19 +14,16 @@ function readLayoutFile(dbmlFilePath) {
 	try {
 		const layoutPath = getLayoutFilePath(dbmlFilePath);
 		if (!fs.existsSync(layoutPath)) return null;
-		const parsed = JSON.parse(fs.readFileSync(layoutPath, 'utf8'));
-		if (parsed?.version === 1 && parsed.positions && typeof parsed.positions === 'object') {
-			return parsed.positions;
-		}
-		return null;
+		return parseLayoutFile(fs.readFileSync(layoutPath, 'utf8'));
 	} catch { return null; }
 }
 
-function writeLayoutFile(dbmlFilePath, positions) {
+function writeLayoutFile(dbmlFilePath, positions, edges) {
 	try {
+		const payload = { version: 1, positions, ...(edges && Object.keys(edges).length ? { edges } : {}) };
 		fs.writeFileSync(
 			getLayoutFilePath(dbmlFilePath),
-			JSON.stringify({ version: 1, positions }, null, 2),
+			JSON.stringify(payload, null, 2),
 			'utf8'
 		);
 	} catch (e) { console.warn('Failed to write layout file:', e.message); }
@@ -195,23 +193,31 @@ function createPreviewPanel(context, filePath, content) {
 	const config = vscode.workspace.getConfiguration('diagram');
 	const inheritThemeStyle = config.get('inheritThemeStyle', true);
 	const edgeType = config.get('edgeType', 'smoothstep');
+	const autoEndpointSide = config.get('autoEndpointSide', true);
+	const relationshipMarkers = config.get('relationshipMarkers', true);
+	const editableEdgeRouting = config.get('editableEdgeRouting', false);
 	const showCardinalityLabels = config.get('showCardinalityLabels', false);
 	const exportQuality = config.get('exportQuality', 0.95);
 	const exportBackground = config.get('exportBackground', true);
 	const exportPadding = config.get('exportPadding', 20);
 
 	// Read persisted layout for this file; create the file immediately if it doesn't exist yet
-	const initialLayout = readLayoutFile(currentFilePath);
+	const persisted = readLayoutFile(currentFilePath);
+	const initialLayout = persisted ? persisted.positions : null;
+	const initialEdgeRoutes = persisted ? persisted.edges : null;
 	if (!fs.existsSync(getLayoutFilePath(currentFilePath))) {
 		writeLayoutFile(currentFilePath, {});
 	}
 
 	// Set the webview content
-	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, initialLayout);
+	panel.webview.html = getWebviewContent(content, fileName, currentFilePath, panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide, relationshipMarkers, editableEdgeRouting, initialLayout, initialEdgeRoutes);
 
-	// Debounce state for layout file writes
+	// Debounce state for layout file writes. pendingEdges starts from the routes
+	// already persisted in the sidecar, so the first positions-only save (a plain
+	// table drag, which omits the edges field) cannot wipe the saved routes.
 	let layoutSaveTimer = null;
 	let pendingPositions = null;
+	let pendingEdges = initialEdgeRoutes;
 
 	// Handle messages from the webview
 	panel.webview.onDidReceiveMessage(
@@ -225,6 +231,9 @@ function createPreviewPanel(context, filePath, content) {
 					const currentConfig = vscode.workspace.getConfiguration('diagram');
 					const currentInheritThemeStyle = currentConfig.get('inheritThemeStyle', true);
 					const currentEdgeType = currentConfig.get('edgeType', 'smoothstep');
+					const currentAutoEndpointSide = currentConfig.get('autoEndpointSide', true);
+					const currentRelationshipMarkers = currentConfig.get('relationshipMarkers', true);
+					const currentEditableEdgeRouting = currentConfig.get('editableEdgeRouting', false);
 					const currentExportQuality = currentConfig.get('exportQuality', 0.95);
 					const currentExportBackground = currentConfig.get('exportBackground', true);
 					const currentExportPadding = currentConfig.get('exportPadding', 20);
@@ -233,6 +242,9 @@ function createPreviewPanel(context, filePath, content) {
 						type: 'configuration',
 						inheritThemeStyle: currentInheritThemeStyle,
 						edgeType: currentEdgeType,
+						autoEndpointSide: currentAutoEndpointSide,
+						relationshipMarkers: currentRelationshipMarkers,
+						editableEdgeRouting: currentEditableEdgeRouting,
 						showCardinalityLabels: currentShowCardinalityLabels,
 						exportQuality: currentExportQuality,
 						exportBackground: currentExportBackground,
@@ -241,9 +253,12 @@ function createPreviewPanel(context, filePath, content) {
 					break;
 				case 'saveLayout':
 					pendingPositions = message.positions;
+					// Treat an omitted edges field as "unchanged" so a positions-only
+					// save never wipes previously-persisted routes.
+					pendingEdges = resolvePendingEdges(pendingEdges, message.edges);
 					clearTimeout(layoutSaveTimer);
 					layoutSaveTimer = setTimeout(() => {
-						writeLayoutFile(currentFilePath, message.positions);
+						writeLayoutFile(currentFilePath, pendingPositions, pendingEdges);
 						layoutSaveTimer = null;
 					}, 500);
 					break;
@@ -251,6 +266,7 @@ function createPreviewPanel(context, filePath, content) {
 					clearTimeout(layoutSaveTimer);
 					layoutSaveTimer = null;
 					pendingPositions = null;
+					pendingEdges = null;
 					deleteLayoutFile(currentFilePath);
 					break;
 			}
@@ -263,6 +279,9 @@ function createPreviewPanel(context, filePath, content) {
 	const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
 		if (event.affectsConfiguration('diagram.inheritThemeStyle') ||
 		    event.affectsConfiguration('diagram.edgeType') ||
+		    event.affectsConfiguration('diagram.autoEndpointSide') ||
+		    event.affectsConfiguration('diagram.relationshipMarkers') ||
+		    event.affectsConfiguration('diagram.editableEdgeRouting') ||
 		    event.affectsConfiguration('diagram.showCardinalityLabels') ||
 		    event.affectsConfiguration('diagram.exportQuality') ||
 		    event.affectsConfiguration('diagram.exportBackground') ||
@@ -270,6 +289,9 @@ function createPreviewPanel(context, filePath, content) {
 			const config = vscode.workspace.getConfiguration('diagram');
 			const inheritThemeStyle = config.get('inheritThemeStyle', true);
 			const edgeType = config.get('edgeType', 'smoothstep');
+			const autoEndpointSide = config.get('autoEndpointSide', true);
+			const relationshipMarkers = config.get('relationshipMarkers', true);
+			const editableEdgeRouting = config.get('editableEdgeRouting', false);
 			const showCardinalityLabels = config.get('showCardinalityLabels', false);
 			const exportQuality = config.get('exportQuality', 0.95);
 			const exportBackground = config.get('exportBackground', true);
@@ -278,6 +300,9 @@ function createPreviewPanel(context, filePath, content) {
 				type: 'configurationChanged',
 				inheritThemeStyle: inheritThemeStyle,
 				edgeType: edgeType,
+				autoEndpointSide: autoEndpointSide,
+				relationshipMarkers: relationshipMarkers,
+				editableEdgeRouting: editableEdgeRouting,
 				showCardinalityLabels: showCardinalityLabels,
 				exportQuality: exportQuality,
 				exportBackground: exportBackground,
@@ -317,7 +342,7 @@ function createPreviewPanel(context, filePath, content) {
 		fileWatcher.dispose();
 		clearTimeout(layoutSaveTimer);
 		if (pendingPositions) {
-			writeLayoutFile(currentFilePath, pendingPositions);
+			writeLayoutFile(currentFilePath, pendingPositions, pendingEdges);
 		}
 		// Clear active panel reference
 		if (activePreviewPanel === panel) {
@@ -341,10 +366,14 @@ function createPreviewPanel(context, filePath, content) {
  * @param {number} exportQuality
  * @param {boolean} exportBackground
  * @param {number} exportPadding
+ * @param {boolean} autoEndpointSide
+ * @param {boolean} relationshipMarkers
+ * @param {boolean} editableEdgeRouting
  * @param {Object|null} initialLayout
+ * @param {Object|null} initialEdgeRoutes
  * @returns {string}
  */
-function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, initialLayout = null) {
+function getWebviewContent(content, fileName, filePath, webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide = true, relationshipMarkers = true, editableEdgeRouting = false, initialLayout = null, initialEdgeRoutes = null) {
 	// Get the local path to main script run in the webview
 	const scriptPathOnDisk = vscode.Uri.file(path.join(__dirname, 'dist', 'webview.js'));
 	const scriptUri = webview.asWebviewUri(scriptPathOnDisk);
@@ -379,11 +408,15 @@ function getWebviewContent(content, fileName, filePath, webview, inheritThemeSty
 			window.filePath = ${JSON.stringify(filePath)};
 			window.inheritThemeStyle = ${JSON.stringify(inheritThemeStyle)};
 			window.edgeType = ${JSON.stringify(edgeType)};
+			window.autoEndpointSide = ${JSON.stringify(autoEndpointSide)};
+			window.relationshipMarkers = ${JSON.stringify(relationshipMarkers)};
+			window.editableEdgeRouting = ${JSON.stringify(editableEdgeRouting)};
 			window.showCardinalityLabels = ${JSON.stringify(showCardinalityLabels)};
 			window.exportQuality = ${JSON.stringify(exportQuality)};
 			window.exportBackground = ${JSON.stringify(exportBackground)};
 			window.exportPadding = ${JSON.stringify(exportPadding)};
 			window.initialLayout = ${JSON.stringify(initialLayout)};
+			window.initialEdgeRoutes = ${JSON.stringify(initialEdgeRoutes)};
 		</script>
 		<script src="${scriptUri}"></script>
 	</body>
@@ -428,6 +461,9 @@ function createBulkExportPanel(context) {
 	const config = vscode.workspace.getConfiguration('diagram');
 	const inheritThemeStyle = config.get('inheritThemeStyle', false);
 	const edgeType = config.get('edgeType', 'smoothstep');
+	const autoEndpointSide = config.get('autoEndpointSide', true);
+	const relationshipMarkers = config.get('relationshipMarkers', true);
+	const editableEdgeRouting = config.get('editableEdgeRouting', false);
 	const showCardinalityLabels = config.get('showCardinalityLabels', false);
 	const exportQuality = config.get('exportQuality', 0.95);
 	const exportBackground = config.get('exportBackground', true);
@@ -444,7 +480,7 @@ function createBulkExportPanel(context) {
 		}
 	);
 
-	panel.webview.html = getWebviewContent('', 'bulk-export', '', panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding);
+	panel.webview.html = getWebviewContent('', 'bulk-export', '', panel.webview, inheritThemeStyle, edgeType, showCardinalityLabels, exportQuality, exportBackground, exportPadding, autoEndpointSide, relationshipMarkers, editableEdgeRouting);
 
 	panel.webview.onDidReceiveMessage(
 		message => handleBulkWebviewMessage(message, panel),

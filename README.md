@@ -171,8 +171,19 @@ This extension supports the full DBML specification including:
 
 - **Drag Tables**: Click and drag table headers to reposition
 - **Group Movement**: Drag table groups to move all contained tables
-- **Relationship Details**: Click relationship lines for detailed information
+- **Relationship Details**: Hover a relationship line to see its details
 - **Navigate via Tooltips**: Click table names in relationship tooltips to jump to that table
+
+### Relationship Interaction
+
+- **Reshape a Route**: Click a relationship to enter edit mode, then drag a segment sideways to
+  move it, or grab it near its middle to split it in two and drag that half. Segments that end up
+  aligned merge back together on their own. Requires `diagram.editableEdgeRouting`.
+- **Choose a Side**: Drag either end of a relationship across its table to pick the side it leaves
+  from or arrives at, or right-click the end to switch it
+- **Reset a Route**: Use the reset control that appears beside a relationship in edit mode to
+  return it to its automatic route
+- **Leave Edit Mode**: Click anywhere off the relationship
 
 ### Keyboard Shortcuts
 
@@ -195,8 +206,8 @@ The extension works out of the box with sensible defaults and includes the follo
 ### Cardinality Configuration
 
 - **`diagram.showCardinalityLabels`** (boolean, default: `false`)
-  - Show cardinality labels (0, 1, N) on relationship edges
-  - `0` = nullable one-side, `1` = non-nullable one-side, `N` = many-side
+  - Show cardinality labels on relationship edges, in addition to the relationship markers
+  - `1` = one-side, `*` = many-side
   - Useful for quickly reading relationship multiplicities without opening tooltips
 
 ### Edge Type Configuration
@@ -207,6 +218,33 @@ The extension works out of the box with sensible defaults and includes the follo
     - `"straight"` - Direct straight lines between tables
     - `"smoothstep"` - Smooth step edges with rounded corners (recommended)
     - `"bezier"` - Curved bezier edges for organic appearance
+  - A relationship whose route has been reshaped by hand is always drawn as orthogonal segments,
+    since that is the shape its saved corners describe. This setting governs every relationship
+    that has not been reshaped.
+
+### Relationship Edge Configuration
+
+- **`diagram.autoEndpointSide`** (boolean, default: `true`)
+  - Each end of a relationship connects to the side of its table that faces the related table,
+    instead of always leaving on the right and arriving on the left
+  - Cuts out the detours — and the crossings they cause — that appear when the related table sits
+    to the left or above
+  - Disable to restore the previous always-right-to-left behaviour
+
+- **`diagram.relationshipMarkers`** (boolean, default: `true`)
+  - Show entity-relationship markers on relationship edges: a crow's foot on the many side and a
+    bar on the one side, drawn against the table border
+  - Makes multiplicity readable at a glance, at any zoom
+
+- **`diagram.editableEdgeRouting`** (boolean, default: `false`)
+  - Allow relationship routes to be reshaped by hand; see **Relationship Interaction** above for
+    the gestures
+  - Reshaped routes are saved next to table positions in the layout file and survive reordering or
+    inserting a `Ref`
+  - Applies to orthogonal edges, so it has no effect while `diagram.edgeType` is `"bezier"` or
+    `"straight"`
+  - Saved routes are always drawn, whether or not this setting is on, so turning it off is a
+    read-only mode rather than a way to lose work
 
 ### Export Configuration
 

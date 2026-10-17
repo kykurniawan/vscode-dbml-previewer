@@ -1,6 +1,8 @@
 import dagre from 'dagre';
 import { getThemeVar } from '../styles/themeManager.js';
 import { parseHeaderColor, darkenHexColor } from './colorUtils.js';
+import { refBaseKey, refKey, makeOccurrenceCounter } from './refIdentity.js';
+import { applySavedRoute } from './layoutStorage.js';
 
 /**
  * Calculate the width needed for a column based on its content
@@ -114,6 +116,36 @@ const mapSourceAndTarget = (ref) => {
 
   return [source, target]
 }
+
+// Decide which side of each table an edge leaves/enters on. An explicit
+// data.sourceSide/targetSide ('left'|'right') always wins for that endpoint;
+// otherwise, when autoEndpointSide is on, the side facing the partner table is
+// chosen by comparing table centres; otherwise the legacy right->left is used.
+// srcTablePos/tgtTablePos are { x, width } of the two table header nodes.
+// Returns { sourceHandle, targetHandle } naming the four transparent handles.
+export const chooseEffectiveSides = (edge, srcTablePos, tgtTablePos, autoEndpointSide) => {
+  const explicitSource = edge?.data?.sourceSide;
+  const explicitTarget = edge?.data?.targetSide;
+
+  let sourceSide = (explicitSource === 'left' || explicitSource === 'right') ? explicitSource : undefined;
+  let targetSide = (explicitTarget === 'left' || explicitTarget === 'right') ? explicitTarget : undefined;
+
+  if (sourceSide === undefined || targetSide === undefined) {
+    if (autoEndpointSide && srcTablePos && tgtTablePos) {
+      const srcCenter = srcTablePos.x + (srcTablePos.width || 0) / 2;
+      const tgtCenter = tgtTablePos.x + (tgtTablePos.width || 0) / 2;
+      const autoSource = srcCenter > tgtCenter ? 'left' : 'right';
+      const autoTarget = srcCenter > tgtCenter ? 'right' : 'left';
+      if (sourceSide === undefined) sourceSide = autoSource;
+      if (targetSide === undefined) targetSide = autoTarget;
+    } else {
+      if (sourceSide === undefined) sourceSide = 'right';
+      if (targetSide === undefined) targetSide = 'left';
+    }
+  }
+
+  return { sourceHandle: `source-${sourceSide}`, targetHandle: `target-${targetSide}` };
+};
 
 /**
  * Find enum definition for a given column type
@@ -236,7 +268,7 @@ const analyzeColumnRelationships = (refs, tables, hasMultipleSchema) => {
   return columnHandles;
 };
 
-export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, edgeType = 'smoothstep', tableChecks = {}, onTableChecksClick = null, showCardinalityLabels = false, onTableIndexesClick = null) => {
+export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClick = null, onTableNoteClick = null, edgeType = 'smoothstep', tableChecks = {}, onTableChecksClick = null, showCardinalityLabels = false, onTableIndexesClick = null, autoEndpointSide = true, relationshipMarkers = true, savedEdgeRoutes = {}, onRouteChange = null, onRouteCommit = null, editableEdgeRouting = false, onEndpointDrag = null, onResetEdge = null, onRouteConvert = null) => {
   if (!dbmlData?.schemas || dbmlData.schemas.length === 0) {
     return { nodes: [], edges: [] };
   }
@@ -467,6 +499,10 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
   // Create edges for relationships connecting column nodes directly from DBML refs
   const edges = [];
 
+  // Deterministic per-Ref occurrence counter, so byte-identical duplicate Refs
+  // get distinct stable keys (best-effort ordinal, called once per Ref).
+  const nextOccurrence = makeOccurrenceCounter();
+
   refs.forEach((ref, index) => {
     if (ref.endpoints && ref.endpoints.length >= 2) {
       const [sourceEndpoint, targetEndpoint] = mapSourceAndTarget(ref)
@@ -474,6 +510,21 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
       // Use fieldNames arrays from actual DBML refs
       const sourceFieldNames = sourceEndpoint.fieldNames || [];
       const targetFieldNames = targetEndpoint.fieldNames || [];
+
+      // Stable base identity for the whole Ref: raw schema/table (schema always
+      // present) plus the COMPLETE ordered field arrays for both endpoints. The
+      // occurrence counter is consulted exactly once per Ref.
+      const refBaseArgs = {
+        srcSchema: sourceEndpoint.schemaName,
+        srcTable: sourceEndpoint.tableName,
+        srcFields: sourceFieldNames,
+        tgtSchema: targetEndpoint.schemaName,
+        tgtTable: targetEndpoint.tableName,
+        tgtFields: targetFieldNames,
+      };
+      const bareBase = refBaseKey(refBaseArgs);
+      const occ = nextOccurrence(bareBase);
+      const base = refBaseKey({ ...refBaseArgs, occurrence: occ });
 
       // Create edges for each field pair
       sourceFieldNames.forEach((sourceField, fieldIndex) => {
@@ -507,15 +558,32 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
           const refColor = parseHeaderColor(ref.color);
           const edgeStroke = refColor ? darkenHexColor(refColor) : getThemeVar('chartsLines');
 
+          // Relationship markers: crow's-foot on a many ('*') end, bar on a one
+          // ('1') end. Bare ids only; React Flow resolves them to url('#id').
+
+          // Per-rendered-line identity, and any saved route for this line.
+          const lineRefKey = refKey(base, sourceField, targetField);
+          const savedRoute = savedEdgeRoutes ? savedEdgeRoutes[lineRefKey] : undefined;
+          // Escape hatch: only apply a saved route when both endpoints still
+          // resolve to real columns; drop any non-finite checkpoint.
+          const endpointsResolve = !!sourceColumn && !!targetColumn;
+          const {
+            sourceSide: seededSourceSide,
+            targetSide: seededTargetSide,
+            checkPoints: seededCheckPoints,
+          } = applySavedRoute(savedRoute, endpointsResolve);
+
+          // A routed edge (side override or waypoints) sits above tables (z 11).
+          const routed = !!(seededSourceSide || seededTargetSide || (seededCheckPoints && seededCheckPoints.length));
+
           edges.push({
             id: `${sourceTable}.${sourceField}-${targetTable}.${targetField}-${index}-${fieldIndex}`,
             source: `${sourceTable}.${sourceField}`,
             target: `${targetTable}.${targetField}`,
-            sourceHandle: 'source',
-            targetHandle: 'target',
             type: 'custom',
             animated: false,
             selectable: true,
+            zIndex: routed ? 11 : undefined,
             style: {
               stroke: edgeStroke,
               strokeWidth: 2,
@@ -535,6 +603,17 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
               refColor,
               pathStyle: edgeType,
               showCardinalityLabels,
+              refKey: lineRefKey,
+              sourceSide: seededSourceSide,
+              targetSide: seededTargetSide,
+              checkPoints: seededCheckPoints,
+              isEditable: editableEdgeRouting,
+              showMarkers: relationshipMarkers,
+              onRouteChange,
+              onRouteCommit,
+              onEndpointDrag,
+              onResetEdge,
+              onRouteConvert,
             }
           });
         }
@@ -546,6 +625,22 @@ export const transformDBMLToNodes = (dbmlData, savedPositions = {}, onColumnClic
 
   // Apply auto-layout using dagre (for table header nodes, sticky notes, and table groups)
   const layoutedElements = getLayoutedElements(nodes, edges, tableGroups, savedPositions);
+
+  // Assign endpoint handles (auto or explicit override) using the laid-out table
+  // geometry, so each edge leaves/enters on the side facing its partner table.
+  const tablePosById = {};
+  layoutedElements.nodes.forEach((node) => {
+    if (node.type === 'tableHeader') {
+      tablePosById[node.id] = { x: node.position.x, width: node.data?.tableWidth || 200 };
+    }
+  });
+  layoutedElements.edges.forEach((edge) => {
+    const src = tablePosById[`table-${edge.data.sourceTable}`];
+    const tgt = tablePosById[`table-${edge.data.targetTable}`];
+    const { sourceHandle, targetHandle } = chooseEffectiveSides(edge, src, tgt, autoEndpointSide);
+    edge.sourceHandle = sourceHandle;
+    edge.targetHandle = targetHandle;
+  });
 
   return {
     nodes: layoutedElements.nodes,

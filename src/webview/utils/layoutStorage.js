@@ -151,12 +151,129 @@ export const applyPersistedLayout = (fileId, positions) => {
 export const cleanupObsoletePositions = (savedPositions, currentNodeIds) => {
   const cleanedPositions = {};
   const currentIds = new Set(currentNodeIds);
-  
+
   Object.keys(savedPositions).forEach(nodeId => {
     if (currentIds.has(nodeId)) {
       cleanedPositions[nodeId] = savedPositions[nodeId];
     }
   });
-  
+
   return cleanedPositions;
+};
+
+/**
+ * Extract per-edge routes (side overrides and waypoints) from React Flow edges,
+ * keyed by each edge's stable refKey. Only edges that actually carry a side
+ * override or a non-empty checkpoint list produce an entry; empty routes are
+ * omitted so the sidecar stays minimal.
+ * @param {Array} edges - React Flow edges array
+ * @returns {Object} Object mapping refKey to a route descriptor
+ */
+export const extractEdgeRoutes = (edges) => {
+  const routes = {};
+
+  (edges || []).forEach(edge => {
+    const key = edge?.data?.refKey;
+    if (!key) return;
+
+    const sourceSide = edge.data.sourceSide;
+    const targetSide = edge.data.targetSide;
+    const checkPoints = Array.isArray(edge.data.checkPoints) ? edge.data.checkPoints : [];
+
+    const hasSourceSide = sourceSide === 'left' || sourceSide === 'right';
+    const hasTargetSide = targetSide === 'left' || targetSide === 'right';
+    const hasCheckPoints = checkPoints.length > 0;
+
+    if (!hasSourceSide && !hasTargetSide && !hasCheckPoints) return;
+
+    const route = {};
+    if (hasSourceSide) route.sourceSide = sourceSide;
+    if (hasTargetSide) route.targetSide = targetSide;
+    if (hasCheckPoints) route.checkPoints = checkPoints.map(p => ({ x: p.x, y: p.y }));
+    routes[key] = route;
+  });
+
+  return routes;
+};
+
+/**
+ * Compute the route fields to seed onto a freshly transformed edge from a saved
+ * route, applying the escape hatches: ignore the route entirely when the edge's
+ * endpoints no longer resolve, only accept 'left'/'right' side overrides, and
+ * drop any non-finite checkpoint.
+ * @param {Object|undefined} savedRoute - The persisted route for this edge, if any
+ * @param {boolean} endpointsResolve - Whether both endpoint columns still exist
+ * @returns {{ sourceSide: (string|undefined), targetSide: (string|undefined), checkPoints: (Array|undefined) }}
+ */
+export const applySavedRoute = (savedRoute, endpointsResolve) => {
+  const result = { sourceSide: undefined, targetSide: undefined, checkPoints: undefined };
+  if (!savedRoute || !endpointsResolve) return result;
+
+  if (savedRoute.sourceSide === 'left' || savedRoute.sourceSide === 'right') {
+    result.sourceSide = savedRoute.sourceSide;
+  }
+  if (savedRoute.targetSide === 'left' || savedRoute.targetSide === 'right') {
+    result.targetSide = savedRoute.targetSide;
+  }
+  if (Array.isArray(savedRoute.checkPoints)) {
+    const pts = savedRoute.checkPoints
+      .filter(p => p && Number.isFinite(p.x) && Number.isFinite(p.y))
+      .map(p => ({ x: p.x, y: p.y }));
+    if (pts.length > 0) result.checkPoints = pts;
+  }
+  return result;
+};
+
+/**
+ * Translate the checkpoints of every edge whose BOTH endpoint tables are in the
+ * moved set by (dx, dy), returning explicit next edges and next routes so the
+ * caller can apply them outside any state updater (no in-updater assembly).
+ * @param {Array} edges - Current React Flow edges
+ * @param {Object} routes - Current saved routes keyed by refKey
+ * @param {Set<string>} movedTableIds - Set of moved table node ids (`table-...`)
+ * @param {number} dx
+ * @param {number} dy
+ * @returns {{ nextEdges: Array, nextRoutes: Object, edgesChanged: boolean }}
+ */
+export const translateEdgeRoutesForMove = (edges, routes, movedTableIds, dx, dy) => {
+  const nextRoutes = { ...(routes || {}) };
+  let edgesChanged = false;
+
+  const nextEdges = (edges || []).map(edge => {
+    const cps = edge?.data?.checkPoints;
+    if (!Array.isArray(cps) || cps.length === 0) return edge;
+    const bothMoved = movedTableIds.has(`table-${edge.data.sourceTable}`)
+      && movedTableIds.has(`table-${edge.data.targetTable}`);
+    if (!bothMoved) return edge;
+
+    edgesChanged = true;
+    const translated = cps.map(p => ({ x: p.x + dx, y: p.y + dy }));
+    const key = edge.data.refKey;
+    if (key) {
+      nextRoutes[key] = { ...(nextRoutes[key] || {}), checkPoints: translated };
+    }
+    return { ...edge, data: { ...edge.data, checkPoints: translated } };
+  });
+
+  return { nextEdges, nextRoutes, edgesChanged };
+};
+
+/**
+ * Clean up obsolete edge routes whose refKey no longer exists in the current
+ * transformed edge set.
+ * @param {Object} savedEdges - Previously saved routes keyed by refKey
+ * @param {Array} currentRefKeys - Array of refKeys present in the current edges
+ * @returns {Object} Cleaned routes object
+ */
+export const cleanupObsoleteEdgeRoutes = (savedEdges, currentRefKeys) => {
+  const cleanedRoutes = {};
+  const currentKeys = new Set(currentRefKeys);
+
+  Object.keys(savedEdges || {}).forEach(refKey => {
+    if (currentKeys.has(refKey)) {
+      cleanedRoutes[refKey] = savedEdges[refKey];
+    }
+  });
+
+  return cleanedRoutes;
 };
