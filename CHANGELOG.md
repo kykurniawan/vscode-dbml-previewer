@@ -2,6 +2,11 @@
 
 All notable changes to the "dbml-previewer" extension will be documented in this file.
 
+## Unreleased
+
+### Fixed
+- **Blank preview when a column default is `0`**: Clicking a column whose default value is `0` (or an empty string) blanked the whole preview. The tooltip fell back to rendering the raw `dbdefault` object, which React rejects as a child. Defaults are now rendered as text, so `default: 0` shows as `Default: 0`.
+
 ## 1.6.1
 
 ### Fixed

@@ -26,12 +26,17 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
     return column.type?.type_name || 'unknown';
   };
 
+  // `dbdefault.value` can be the number 0 or an empty string, both falsy but
+  // valid defaults. Always return a string primitive (or null when there is no
+  // default) so React never receives the raw dbdefault object as a child.
   const getDefaultValue = (column) => {
-    if (column.dbdefault) {
-      return column.dbdefault.value || column.dbdefault;
+    if (!column.dbdefault || column.dbdefault.value == null) {
+      return null;
     }
-    return null;
+    return String(column.dbdefault.value);
   };
+
+  const defaultValue = getDefaultValue(column);
 
   // Position tooltip to avoid going off screen
   const tooltipStyle = {
@@ -142,7 +147,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
       )}
 
       {/* Default value */}
-      {getDefaultValue(column) && (
+      {defaultValue !== null && (
         <div style={{ marginBottom: '8px' }}>
           <span style={{ 
             color: getThemeVar('descriptionForeground'),
@@ -158,7 +163,7 @@ const ColumnTooltip = ({ column, enumDef, position, onClose }) => {
             borderRadius: '3px',
             fontSize: '11px'
           }}>
-            {getDefaultValue(column)}
+            {defaultValue}
           </span>
         </div>
       )}
