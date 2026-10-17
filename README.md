@@ -14,6 +14,15 @@ Perfect for database architects, developers, and anyone working with database sc
 
 ## What's New
 
+### v1.7.0 - Relationship Editing Release
+
+- **Editable Relationship Edges**: Route relationships by hand and read them more clearly
+  - Each end connects to the side of its table that faces the relationship (`diagram.autoEndpointSide`, on by default)
+  - Enable `diagram.editableEdgeRouting` to click a relationship and drag a segment sideways to move it, or split it in two; each edge has a reset control that restores its automatic route
+  - Multiplicities are drawn on the line as crow's-foot / bar markers (`diagram.relationshipMarkers`, on by default)
+- **Minimap Toggle**: New `diagram.showMinimap` setting to hide the minimap in the bottom-right corner
+- **Column Default Fix**: Clicking a column whose default value is `0` no longer blanks the preview
+
 ### v1.6.1 - Bug Fix Release
 
 - **Blank Preview Fix**: Fixed the preview panel showing up empty in the installed extension (v1.6.0)
@@ -36,10 +45,11 @@ Perfect for database architects, developers, and anyone working with database sc
 ### Intelligent Relationship Mapping
 
 - **Visual Connections** - See foreign key relationships at a glance
-- **Interactive Tooltips** - Click relationships for detailed information
+- **Interactive Tooltips** - Hover a relationship for detailed information
 - **Clickable Navigation** - Click table names in tooltips to navigate instantly
 - **Column-Level Precision** - Exact source and target column identification
-- **Cardinality Display** - Clear 1:1, 1:_, _:\* relationship indicators
+- **Readable Cardinality** - Crow's-foot / bar markers on the line, with optional `1` / `*` labels
+- **Editable Routes** - Optionally reshape relationship lines by hand; edits are saved with the diagram
 
 ### Enterprise-Ready Schema Support
 
